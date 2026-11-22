@@ -164,10 +164,10 @@ body.cupom-on > :not(#cupom){display:none!important}
     <div class="marca"><b>KITAMI</b><span>Vila Kitami Sushi</span></div>
     <h1>Monte seu pedido e mande direto pra cozinha.</h1>
     <p>Escolha os combos e os complementos. O pedido chega pronto no nosso WhatsApp.</p>
-    <div class="selos"><span>Abre às 18h</span><span>Praia de Itaparica · Vila Velha</span><span>Feito na hora</span></div>
+    <div class="selos"><span>Aberto das 18h30 às 23h</span><span>Praia de Itaparica · Vila Velha</span><span>Feito na hora</span></div>
   </div>
 </header>
-<div class="aviso wrap" id="aviso" hidden><div>A cozinha abre às 18h. Pode mandar o pedido agora que a gente confirma assim que abrir.</div></div>
+<div class="aviso wrap" id="aviso" hidden><div>Estamos fechados agora. Funcionamos das 18h30 às 23h. Pode mandar o pedido que a gente confirma assim que abrir.</div></div>
 <nav class="cats" aria-label="Categorias"><div class="wrap" id="cats"></div></nav>
 <main class="wrap" id="lista"></main>
 <p class="rodape">Vila Kitami Sushi · CNPJ 67.762.247/0001-16 · WhatsApp (27) 9 9765-2700</p>
@@ -320,8 +320,8 @@ try { guard = JSON.parse(localStorage.getItem('kitami-cliente')||'{}'); } catch(
 var st = {itens:[], comp:{}, modo:guard.modo||'Entrega', pag:guard.pag||'Pix'};
 var DADOS = ['nome','tel','rua','num','bairro','ref','troco','obs'];
 
-/* aviso antes das 18h */
-var h = new Date().getHours(); if (h>=4 && h<18) $('#aviso').hidden = false;
+/* aviso fora do horário (18h30 às 23h) */
+var agora = new Date(), mins = agora.getHours()*60 + agora.getMinutes(); if (mins < 18*60+30 || mins >= 23*60) $('#aviso').hidden = false;
 
 /* categorias + lista */
 var cats = ORDEM.filter(function(c){ return MENU.some(function(p){ return p.cat===c; }); });
