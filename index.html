@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C8202E">
+<meta name="description" content="Faça seu pedido na Vila Kitami Sushi: escolha os combos e envie pelo WhatsApp.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Pedido Vila Kitami</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+</head>
+<body>
+<style>
+/* Layout: cardápio em coluna única estilo app, faixa de categorias fixa, sacola flutuante que abre uma folha de fechamento */
+:root{
+  --bg:#F4F3F1; --card:#FFFFFF; --ink:#1B1517; --suave:#6E6466; --linha:#E6E1DE;
+  --verm:#C8202E; --verm-esc:#9E1622; --verm-claro:#FCE9EA; --nori:#1F2A22; --ok:#2F7A4A;
+  --f-marca:"Dela Gothic One","Zen Kaku Gothic New",system-ui,sans-serif;
+  --f-texto:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:22px; --sombra:0 10px 30px -18px rgba(60,20,24,.35);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141012;--card:#1E191B;--ink:#F3ECEC;--suave:#A99C9E;--linha:#2E2729;--verm:#E2404D;--verm-esc:#C8202E;--verm-claro:#3A1C20;--nori:#0E1310;--ok:#5DBB82;--sombra:0 10px 30px -18px rgba(0,0,0,.8);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141012;--card:#1E191B;--ink:#F3ECEC;--suave:#A99C9E;--linha:#2E2729;--verm:#E2404D;--verm-esc:#C8202E;--verm-claro:#3A1C20;--nori:#0E1310;--ok:#5DBB82;--sombra:0 10px 30px -18px rgba(0,0,0,.8);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-texto);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--verm);outline-offset:2px;border-radius:12px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* topo */
+.hero{background:var(--verm);color:#fff;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 26px);padding-bottom:30px;border-radius:0 0 34px 34px;position:relative;overflow:hidden}
+.hero::after{content:"すし";position:absolute;right:-10px;bottom:-34px;font-family:var(--f-marca);font-size:150px;line-height:1;color:rgba(255,255,255,.08);pointer-events:none}
+.hero .wrap{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.marca{display:flex;align-items:baseline;gap:10px}
+.marca b{font-family:var(--f-marca);font-weight:400;font-size:30px;letter-spacing:.04em}
+.marca span{font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.hero h1{margin:0;font-size:clamp(24px,6vw,32px);font-weight:700;line-height:1.15;text-wrap:balance;max-width:20ch}
+.hero p{margin:0;opacity:.9;font-size:15px}
+.selos{display:flex;flex-wrap:wrap;gap:8px}
+.selos span{background:rgba(255,255,255,.16);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:500}
+.aviso{margin:14px auto 0;max-width:760px}
+.aviso div{background:var(--verm-claro);color:var(--ink);border-radius:16px;padding:12px 16px;font-size:14px}
+
+/* categorias */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.cats{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:12px}
+.cats .wrap{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.cats .wrap::-webkit-scrollbar{display:none}
+.cat{flex:none;border:1.5px solid var(--linha);background:var(--card);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:500;white-space:nowrap;transition:background .25s,color .25s,border-color .25s}
+.cat.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* lista */
+main{padding-bottom:140px}
+.sec{padding-top:18px;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 70px)}
+.sec h2{font-family:var(--f-marca);font-weight:400;font-size:21px;margin:6px 0 12px;letter-spacing:.01em}
+.itens{display:grid;gap:12px}
+.item{display:grid;grid-template-columns:120px 1fr;gap:14px;background:var(--card);border-radius:var(--r);padding:10px;box-shadow:var(--sombra);text-align:left;border:0;width:100%;align-items:stretch;transition:transform .2s}
+.item:active{transform:scale(.985)}
+.item img{width:120px;height:90px;align-self:center;border-radius:16px;object-fit:cover;background:var(--linha)}
+.info{min-width:0;display:flex;flex-direction:column;gap:4px;padding:4px 4px 2px 0}
+.info b{font-size:16px;font-weight:700;line-height:1.25}
+.info small{font-size:13px;color:var(--suave);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc{display:inline-block;align-self:flex-start;font-size:12px;font-weight:700;color:var(--verm);background:var(--verm-claro);border-radius:999px;padding:2px 9px}
+.base{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.preco{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.mais{width:36px;height:36px;border-radius:50%;background:var(--verm);color:#fff;display:grid;place-items:center;font-size:22px;line-height:1;flex:none}
+.mais.tem{width:auto;padding:0 12px;border-radius:999px;font-size:14px;font-weight:700}
+
+/* sacola flutuante */
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+.barra button{pointer-events:auto;max-width:728px;margin:0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border:0;border-radius:20px;padding:16px 20px;font-weight:700;font-size:16px;box-shadow:0 18px 40px -16px rgba(0,0,0,.55);transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.9,.3,1.2)}
+.barra.on button{transform:none}
+.barra .n{background:var(--verm);color:#fff;border-radius:999px;min-width:28px;height:28px;display:inline-grid;place-items:center;padding:0 8px;font-size:14px;margin-right:10px}
+.pulse{animation:pulse .4s}
+@keyframes pulse{50%{transform:scale(1.04)}}
+
+/* folhas */
+.veu{position:fixed;inset:0;z-index:50;background:rgba(10,6,8,.5);opacity:0;pointer-events:none;transition:opacity .3s}
+.veu.on{opacity:1;pointer-events:auto}
+.folha{position:fixed;left:0;right:0;bottom:0;z-index:60;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:var(--bg);border-radius:28px 28px 0 0;transform:translateY(105%);transition:transform .4s cubic-bezier(.2,.8,.2,1);max-width:760px;margin:0 auto}
+.folha.on{transform:none}
+.folha .alca{width:44px;height:5px;border-radius:9px;background:var(--linha)}
+.folha .corpo{overflow-y:auto;padding:8px max(18px,env(safe-area-inset-right,0px)) 18px max(18px,env(safe-area-inset-left,0px));overscroll-behavior:contain}
+.folha .pe{flex:none;padding:12px max(18px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));border-top:1px solid var(--linha);background:var(--bg);display:flex;gap:10px}
+.cab-f{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px max(18px,env(safe-area-inset-right,0px)) 6px max(18px,env(safe-area-inset-left,0px));position:relative;min-height:56px}
+.cab-f b{font-family:var(--f-marca);font-weight:400;font-size:20px}
+.cab-f .alca{position:absolute;left:50%;top:8px;margin:0;transform:translateX(-50%)}
+.fechar{margin-left:auto;width:40px;height:40px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--sombra);font-size:20px;z-index:2}
+.det-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:22px;margin-top:10px;background:var(--linha)}
+.det h3{font-size:22px;margin:16px 0 4px;line-height:1.2}
+.det .comp{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px;padding:0;list-style:none}
+.det .comp li{background:var(--card);border:1px solid var(--linha);border-radius:999px;padding:6px 12px;font-size:13.5px}
+label.t{display:block;font-weight:700;font-size:14px;margin:18px 0 8px}
+.campo{width:100%;border:1.5px solid var(--linha);background:var(--card);border-radius:16px;padding:13px 15px;font-size:16px;outline:none;transition:border-color .2s}
+.campo:focus{border-color:var(--verm)}
+textarea.campo{resize:vertical;min-height:70px}
+.qtd{display:flex;align-items:center;gap:4px;background:var(--card);border-radius:999px;padding:4px;border:1.5px solid var(--linha);flex:none}
+.qtd button{width:38px;height:38px;border-radius:50%;border:0;background:transparent;font-size:20px;font-weight:700}
+.qtd b{min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
+.btn{flex:1;border:0;border-radius:18px;padding:16px 18px;font-weight:700;font-size:16px;background:var(--verm);color:#fff;display:flex;justify-content:center;align-items:center;gap:10px;text-decoration:none;text-align:center}
+.btn:active{background:var(--verm-esc)}
+.btn.sec2{background:var(--card);color:var(--ink);border:1.5px solid var(--linha);flex:none}
+.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+
+/* sacola */
+.sac h3{font-family:var(--f-marca);font-weight:400;font-size:22px;margin:14px 0 6px}
+.bloco{background:var(--card);border-radius:20px;padding:6px 14px;box-shadow:var(--sombra);margin-top:10px}
+.linha{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--linha)}
+.linha:last-child{border-bottom:0}
+.linha img{width:48px;height:48px;border-radius:12px;object-fit:cover;flex:none}
+.linha .tx{flex:1;min-width:0}
+.linha .tx b{display:block;font-size:14.5px;line-height:1.25}
+.linha .tx small{color:var(--suave);font-size:13px}
+.linha .v{font-weight:700;font-size:14.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.linha .qtd{padding:2px}.linha .qtd button{width:32px;height:32px;font-size:18px}
+.h4{font-weight:700;font-size:15px;margin:22px 0 2px}
+.h4 small{display:block;font-weight:400;color:var(--suave);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1.5px solid var(--linha);background:var(--card);border-radius:16px;padding:10px 14px;font-size:14.5px;font-weight:500;text-align:left;transition:all .2s}
+.chip small{display:block;font-weight:400;color:var(--suave);font-size:12.5px}
+.chip.on{border-color:var(--verm);background:var(--verm-claro)}
+.chip.on small{color:var(--verm)}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duas .campo{min-width:0}
+.total{margin-top:18px;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sombra);display:grid;gap:6px;font-variant-numeric:tabular-nums}
+.total div{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--suave)}
+.total div.g{color:var(--ink);font-weight:700;font-size:19px;padding-top:6px;border-top:1px solid var(--linha);margin-top:4px}
+.erro{color:var(--verm);font-size:14px;margin-top:10px;min-height:1em}
+.vazio{text-align:center;color:var(--suave);padding:40px 10px}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:80;transform:translate(-50%,20px);background:var(--ok);color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.rodape{text-align:center;color:var(--suave);font-size:13px;padding:30px 16px 0}
+@media (min-width:640px){.itens{grid-template-columns:1fr 1fr}.item{grid-template-columns:1fr;}.item img{width:100%;height:auto;aspect-ratio:4/3}.info{padding:2px 6px 4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* comprovante para impressão */
+body.cupom-on > :not(#cupom){display:none!important}
+#cupom{min-height:100vh;background:var(--bg);padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.c-barra{max-width:420px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.c-barra b{font-family:var(--f-marca);font-weight:400;font-size:20px;flex:1 1 100%}
+.c-barra .chip{padding:8px 14px}
+.c-barra .btn{flex:1 1 auto}
+.papel{margin:0 auto;background:#fff;color:#000;font-family:"Courier New",ui-monospace,monospace;font-size:13px;line-height:1.35;padding:14px 12px;border-radius:14px;box-shadow:var(--sombra)}
+.papel.w80{width:302px}.papel.w58{width:219px;font-size:11.5px}
+.papel .ln{white-space:pre-wrap;word-break:break-word}
+.papel .c{text-align:center}.papel .b{font-weight:700}.papel .g{font-size:1.35em}.papel .p{font-size:.85em}
+.papel .row{display:flex;justify-content:space-between;gap:8px}.papel .row span:last-child{white-space:nowrap}
+.papel hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.c-dica{max-width:420px;margin:14px auto 0;color:var(--suave);font-size:13.5px;text-align:center}
+@media print{
+  #cupom{padding:0;min-height:0;background:#fff}
+  .c-barra,.c-dica{display:none!important}
+  .papel{box-shadow:none;border-radius:0;padding:0 2mm;margin:0}
+  .papel.w80{width:76mm}.papel.w58{width:54mm}
+}
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="marca"><b>KITAMI</b><span>Vila Kitami Sushi</span></div>
+    <h1>Monte seu pedido e mande direto pra cozinha.</h1>
+    <p>Escolha os combos e os complementos. O pedido chega pronto no nosso WhatsApp.</p>
+    <div class="selos"><span>Abre às 18h</span><span>Praia de Itaparica · Vila Velha</span><span>Feito na hora</span></div>
+  </div>
+</header>
+<div class="aviso wrap" id="aviso" hidden><div>A cozinha abre às 18h. Pode mandar o pedido agora que a gente confirma assim que abrir.</div></div>
+<nav class="cats" aria-label="Categorias"><div class="wrap" id="cats"></div></nav>
+<main class="wrap" id="lista"></main>
+<p class="rodape">Vila Kitami Sushi · CNPJ 67.762.247/0001-16 · WhatsApp (27) 9 9765-2700</p>
+
+<div class="barra" id="barra"><button id="abrir-sacola" type="button"><span><span class="n" id="b-n">0</span>Ver pedido</span><span id="b-v">R$ 0,00</span></button></div>
+<div class="veu" id="veu"></div>
+
+<section class="folha" id="f-item" role="dialog" aria-modal="true" aria-label="Detalhes do item">
+  <div class="cab-f"><div class="alca"></div><button class="fechar" data-fechar aria-label="Fechar">×</button></div>
+  <div class="corpo det" id="det"></div>
+  <div class="pe"><div class="qtd"><button type="button" id="d-menos" aria-label="Menos">−</button><b id="d-q">1</b><button type="button" id="d-mais" aria-label="Mais">+</button></div><button class="btn" type="button" id="d-add">Adicionar</button></div>
+</section>
+
+<section class="folha" id="f-sacola" role="dialog" aria-modal="true" aria-label="Seu pedido">
+  <div class="cab-f"><div class="alca"></div><b>Seu pedido</b><button class="fechar" data-fechar aria-label="Fechar">×</button></div>
+  <div class="corpo sac" id="sac"></div>
+  <div class="pe"><button class="btn sec2" type="button" id="copiar">Copiar</button><a class="btn" id="enviar" href="#" target="_blank" rel="noopener">Enviar no WhatsApp</a></div>
+</section>
+<div class="toast" id="toast"></div>
+<section id="cupom" hidden>
+  <div class="c-barra"><b>Comprovante do pedido</b>
+    <button type="button" class="chip on" data-papel="80">80 mm</button><button type="button" class="chip" data-papel="58">58 mm</button>
+    <button type="button" class="btn" id="c-imprimir">Imprimir</button><a class="btn sec2" id="c-baixar" download="pedido-vila-kitami.png" href="#">Salvar imagem</a>
+  </div>
+  <div class="papel w80" id="papel"></div>
+  <p class="c-dica">No celular, se a impressora usa um app próprio, toque em "Salvar imagem" e imprima pelo app.</p>
+</section>
+
+<script>
+(function(){
+/* ======== AJUSTES DA LOJA (edite aqui) ======== */
+var WHATS = '5527997652700';
+var COMPLEMENTOS = [
+  {id:'teriyaki', nome:'Molho Teriyaki',        preco:1},
+  {id:'gengibre', nome:'Gengibre - pote 30 ml', preco:1},
+  {id:'wassabi',  nome:'Wassabi - 30 ml',       preco:1}
+];
+var PAGAMENTOS = ['Pix','Cartão na entrega','Dinheiro'];
+var ORDEM = ['Combinados Kitami','Combos Promocionais','Combos de Hot','Temakis','Porções','Entradas','Bebidas'];
+var NOME_CAT = {};
+/* =============================================== */
+var MENU = [{"id": "kitami-01", "nome": "Combo Kitami 01", "cat": "Combinados Kitami", "preco": 85.9, "comp": "05 Sashimi de salmão c/ cream cheese flambado; 05 Niguiri Salmão; 05 Hots Philadelphia; 05 Hots Gambei ; 05 Uramaki Salmão c/ Cream Cheese", "img": "img3/kitami-01.webp"}, {"id": "kitami-02", "nome": "Combo Kitami 02", "cat": "Combinados Kitami", "preco": 81.9, "comp": "04 Hots; 04 Gunkan C/ Tartar de Salmão; 05 Maki Philadelphia; 05 Sushi de Salmão; 05 Sashimi de Salmão", "img": "img3/kitami-02.webp"}, {"id": "kitami-03", "nome": "Combo Kitami 03 - 20 Peças", "cat": "Combinados Kitami", "preco": 81.9, "comp": "", "img": "img3/kitami-03.webp"}, {"id": "kitami-04", "nome": "Combo Kitami 04", "cat": "Combinados Kitami", "preco": 136.9, "comp": "08 Gunkan c/ Tartar de Salmão; 08 Sushi Skin; 08 Sushi de Salmão; 08 Sashimi de Salmão", "img": "img3/kitami-04.webp"}, {"id": "kitami-04-34", "nome": "Combo Kitami 04 - 34 Peças", "cat": "Combinados Kitami", "preco": 136.9, "comp": "10 Sushi Salmão; 8 Sushi Skin; 8 Gunkan c/ Tartar de Salmão; 8 Sashimi de Salmão", "img": "img3/kitami-04-34.webp"}, {"id": "kitami-05", "nome": "Combo Kitami 05 - 26 Peças", "cat": "Combinados Kitami", "preco": 104.9, "comp": "10 Sushi Salmão; 8 Sushi Skin; 8 Sashimi Salmão", "img": "img3/kitami-05.webp"}, {"id": "kitami-06", "nome": "Combo Kitami 06 - 25 Peças Flambado", "cat": "Combinados Kitami", "preco": 101.9, "comp": "5 Hot Gambey; 5 Gunkan c/ Cream Cheese; 5 Gunkan c/ Tartar de Salmão; 5 Sushi de Salmão Gambey; 5 Sashimi de Salmão", "img": "img3/kitami-06.webp"}, {"id": "kitami-07", "nome": "Combo Kitami 07 - 40 Peças", "cat": "Combinados Kitami", "preco": 191.9, "comp": "15 Sashimi de Haddock; 15 Sashimi de Salmão; 6 Maki Philadélphia; 4 Sushi de Salmão", "img": "img3/kitami-07.webp"}, {"id": "kitami-10", "nome": "Combo 10 Kitami", "cat": "Combinados Kitami", "preco": 155.9, "comp": "10 Hots Philadelphia; 07 Uramaki Salmão; 07 Gunkan c/Salmão; 04 Sushi Salmão ; 04 Sushi Hadock", "img": "img3/kitami-10.webp"}, {"id": "promo-02", "nome": "Combo Promocional 02 - 24 Peças", "cat": "Combos Promocionais", "preco": 72.9, "comp": "2 Gunkan c/ Cream Cheese; 4 Uramaki Skin; 4 Maki Kani c/ Tartar de Salmão; 4 Uramaki Califórnia; 10 Hot Philadélphia", "img": "img3/promo-02.webp"}, {"id": "promo-03", "nome": "Combo Promocional 20 Peças - 03", "cat": "Combos Promocionais", "preco": 59.9, "comp": "08 Uramaki Salmão c/ cream cheese; 08 Maki Philadelphia; 04 Niguiri Salmão", "img": "img3/promo-03.webp"}, {"id": "promo-07", "nome": "Combo Promocional 07 - 48 Peças", "cat": "Combos Promocionais", "preco": 129.9, "comp": "7 Hot Gambey ( couve); 7 Hot Doritos; 4 Sushi Skin; 5 Sashimi Salmão; 4 Uramaki Skin; 4 Uramaki califórnia; 4 Uramaki Philadélphia; 8 Maki Salmão; 5 Sushi salmão", "img": "img3/promo-07.webp"}, {"id": "promo-09", "nome": "Combo Promocional 09 - 40 Peças", "cat": "Combos Promocionais", "preco": 136.9, "comp": "8 Gunkan Flambado c/ Geléia de morango; 8 Gunkan C/ Cream Cheese Flambado; 8 Gunkan Salmão Flambado; 8 Hots Doritos; 8 Hots Gambey", "img": "img3/promo-09.webp"}, {"id": "promo-10", "nome": "Combo Promocional 10 - 32 Peças", "cat": "Combos Promocionais", "preco": 134.9, "comp": "8 Sushi Salmão; 8 Gunkan c/ Cream Cheese; 8 Gunkan c/ Geléia de Morango; 8 Gunkan c/ Tartar de Salmão", "img": "img3/promo-10.webp"}, {"id": "promo-12", "nome": "Combo promocional 12 - 33 peças", "cat": "Combos Promocionais", "preco": 105.9, "comp": "8 Sushi de Salmão; 8 Maki Philadélphia; 8 Sushi Skin; 9 Hots Philadélphia", "img": "img3/promo-12.webp"}, {"id": "promo-13", "nome": "Combo Promocional 13 - 20 Peças", "cat": "Combos Promocionais", "preco": 71.9, "comp": "5 Sushi Salmão; 5 Harumaki Philadélphia; 5 Gunkan Salmão; 5 Sashimi Salmão", "img": "img3/promo-13.webp"}, {"id": "promo-14", "nome": "Combo Promocional 14 - 18 Peças", "cat": "Combos Promocionais", "preco": 56.9, "comp": "8 Bolinho de Salmão c/ Cream Cheese e cebolinha; 5 Hots Philadélphia; 5 Hots Gambey", "img": "img3/promo-14.webp"}, {"id": "familia", "nome": "Combo Familia Promocional - 90 Peças", "cat": "Combos Promocionais", "preco": 249.9, "comp": "24 Hots Philadélphia; 10 Hots c/ Doritos ou Gambey; 10 Uramaki Philadélphia; 10 Uramaki Califórnia; 10 Maki Philadélphia; 10 Gunkan C/ Cream Cheese; 6 Sushi Salmão; 6 Sushi Salmão Flambado; 4 Sashimi Salmão", "img": "img3/familia.webp"}, {"id": "hots-20", "nome": "Combo Hots 20 Peças", "cat": "Combos de Hot", "preco": 51.9, "comp": "5 Hots Philadelphia : 5 Hots c/ Crispy de Cebola ; 5 Hots C/ Geleia de Morango; 5 Hots Gambey", "img": "img3/hots-20.webp"}, {"id": "hot-30", "nome": "Combo Hot 30 Peças", "cat": "Combos de Hot", "preco": 74.9, "comp": "20 Hots Philadelphia; 5 Hots Gambey ; 5 Hots Doritos", "img": "img3/hot-30.webp"}, {"id": "promo-hot-30", "nome": "Combo Promocional hot - 30 Peças", "cat": "Combos de Hot", "preco": 84.9, "comp": "15 Hots Gambey; 15 Hots Com Doritos", "img": "img3/promo-hot-30.webp"}, {"id": "hot-35", "nome": "Combo hot - 35 Peças", "cat": "Combos de Hot", "preco": 85.9, "comp": "25 Hots Philadélphia; 10 Hots Gambey", "img": "img3/hot-35.webp"}, {"id": "temaki-phila", "nome": "Temaki Philadelphia", "cat": "Temakis", "preco": 40.9, "comp": "Salmão; Arroz; Cream Cheese; Cebolinha", "img": "img3/temaki-phila.webp"}, {"id": "temaki-hot-phila", "nome": "Temaki Hot Philadelphia", "cat": "Temakis", "preco": 45.9, "comp": "", "img": "img3/temaki-hot-phila.webp"}, {"id": "temaki-sem-arroz", "nome": "Temaki Philadélphia s/ Arroz", "cat": "Temakis", "preco": 50.0, "comp": "Salmão, Cream Cheese e Cebolinha envoltos em alga Nori.", "img": "img3/temaki-sem-arroz.webp"}, {"id": "hot-phila-gambey", "nome": "Hot Philadélphia + Hot Gambey", "cat": "Porções", "preco": 29.9, "comp": "Hot Philadélphia 05 Peças + Hot Gambey 05 Peças", "img": "img3/hot-phila-gambey.webp"}, {"id": "niguiri-salmao", "nome": "Niguiri de Salmão", "cat": "Porções", "preco": 25.9, "comp": "Niguiri de Salmão 05 Peças", "img": "img3/niguiri-salmao.webp"}, {"id": "maki-phila", "nome": "Maki Philadélphia", "cat": "Porções", "preco": 25.9, "comp": "Maki Philadélphia 05 Peças", "img": "img3/maki-phila.webp"}, {"id": "gunkan-cc", "nome": "Gunkan c/ Cream Cheese", "cat": "Porções", "preco": 29.9, "comp": "Gunkan c/ Cream Cheese", "img": "img3/gunkan-cc.webp"}, {"id": "sashimi-haddock", "nome": "Sashimi Haddock- 5 Peças", "cat": "Porções", "preco": 30.9, "comp": "Sashimi de Haddock", "img": "img3/sashimi-haddock.webp"}, {"id": "ceviche", "nome": "Ceviche - 300g", "cat": "Entradas", "preco": 59.9, "comp": "", "img": "img3/ceviche.webp"}, {"id": "sunomono", "nome": "Sunomono - 250 Gramas", "cat": "Entradas", "preco": 19.9, "comp": "Pepino, vinagre de arroz e Gergelim", "img": "img3/sunomono.webp"}, {"id": "sunomono-salmao", "nome": "Sunomono c/ Salmão - 250 gr.", "cat": "Entradas", "preco": 24.9, "comp": "Pepino, Salmão, Vinagre de arroz e Gergelim", "img": "img3/sunomono-salmao.webp"}, {"id": "bolinho-salmao", "nome": "Bolinho de Salmão", "cat": "Entradas", "preco": 25.9, "comp": "08 Bolinho de Salmão C/ Cream Cheese e cebolinha", "img": "img3/bolinho-salmao.webp"}, {"id": "rolinho-salmao", "nome": "Rolinho de Salmão- 2 unidades", "cat": "Entradas", "preco": 18.9, "comp": "Salmão, Cream Cheese e Cebolinha envolto em massa folhada e frito.", "img": "img3/rolinho-salmao.webp"}, {"id": "rolinho-romeu-julieta", "nome": "Rolinho Romeu e Julieta 02 Und.", "cat": "Entradas", "preco": 16.9, "comp": "02 unidades de Rolinho C/ Queijo e Goiabada", "img": "img3/rolinho-romeu-julieta.webp"}, {"id": "coca", "nome": "Coca - Cola Lata 350 ml", "cat": "Bebidas", "preco": 8.9, "comp": "Coca - Cola Lata 350 ml", "img": "img3/coca.webp"}, {"id": "coca-zero", "nome": "Coca - Cola Zero Lata", "cat": "Bebidas", "preco": 8.9, "comp": "Coca - Cola Lata zero 350 ml", "img": "img3/coca-zero.webp"}, {"id": "guarana", "nome": "Guaraná Antarctica Lata", "cat": "Bebidas", "preco": 8.9, "comp": "Guaraná Antartica Lata 350 ml", "img": "img3/guarana.webp"}, {"id": "guarana-zero", "nome": "Guaraná Antarctica Zero Lata", "cat": "Bebidas", "preco": 8.9, "comp": "Guaraná Antartica Zero 350 ml", "img": "img3/guarana-zero.webp"}];
+var LOJA = {nome:'VILA KITAMI SUSHI', cnpj:'67.762.247/0001-16', tel:'(27) 9 9765-2700', end:'Praia de Itaparica · Vila Velha-ES'};
+var SITE_URL = ''; /* endereço do site publicado; vazio = usa o endereço atual */
+function b64e(o){ return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64d(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+var PARAM = null; try { PARAM = new URLSearchParams(location.search).get('p'); } catch(e){}
+if (PARAM){ try { mostrarCupom(b64d(PARAM)); return; } catch(e){} }
+function mostrarCupom(P){
+  var R = function(v){ return 'R$ '+v.toFixed(2).replace('.',','); };
+  var d = new Date(P.ts||Date.now()), pad=function(n){return String(n).padStart(2,'0');};
+  var L = [];
+  L.push({t:LOJA.nome,c:1,b:1,g:1},{t:'CNPJ '+LOJA.cnpj,c:1,p:1},{t:'WhatsApp '+LOJA.tel,c:1,p:1},{t:LOJA.end,c:1,p:1},{hr:1});
+  L.push({t:pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes())});
+  L.push({t:'Cliente: '+P.n,b:1},{t:'Tel: '+P.t});
+  L.push({t:P.m==='Entrega' ? 'Entrega: '+P.e : 'RETIRADA NA LOJA', b:1},{hr:1});
+  L.push({t:'ITENS',b:1});
+  var tot=0;
+  P.i.forEach(function(x){ tot+=x[1]*x[2]; L.push({l:x[1]+'x '+x[0], r:R(x[1]*x[2])}); if (x[3]) L.push({t:'  obs: '+x[3],p:1}); });
+  if (P.c && P.c.length){ L.push({t:'COMPLEMENTOS',b:1}); P.c.forEach(function(x){ tot+=x[1]*x[2]; L.push({l:x[1]+'x '+x[0], r:x[2]?R(x[1]*x[2]):'grátis'}); }); }
+  L.push({hr:1},{l:'TOTAL', r:R(tot), b:1, g:1});
+  L.push({t:'Pagamento: '+P.p+(P.tr?' (troco p/ R$ '+P.tr+')':'')});
+  if (P.o) L.push({t:'Obs.: '+P.o});
+  L.push({hr:1},{t:'Obrigado pela preferência!',c:1},{t:'Documento não fiscal',c:1,p:1});
+  var e = function(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); };
+  var cls = function(x){ return (x.c?' c':'')+(x.b?' b':'')+(x.g?' g':'')+(x.p?' p':''); };
+  document.getElementById('papel').innerHTML = L.map(function(x){
+    if (x.hr) return '<hr>';
+    if (x.l!==undefined) return '<div class="row'+cls(x)+'"><span>'+e(x.l)+'</span><span>'+e(x.r)+'</span></div>';
+    return '<div class="ln'+cls(x)+'">'+e(x.t)+'</div>';
+  }).join('');
+  document.title = 'Pedido de '+P.n+' · Vila Kitami';
+  document.body.classList.add('cupom-on'); document.getElementById('cupom').hidden = false;
+  var w = 80, estilo = document.createElement('style'); document.head.appendChild(estilo);
+  function papel(n){ w=n; document.getElementById('papel').className='papel w'+n; estilo.textContent='@page{size:'+n+'mm auto;margin:0}';
+    document.querySelectorAll('[data-papel]').forEach(function(b){ b.classList.toggle('on', +b.dataset.papel===n); }); imagem(); }
+  function imagem(){
+    var W = w===80 ? 576 : 384, pad=14, fs = w===80 ? 24 : 19, cv=document.createElement('canvas'), g=cv.getContext('2d');
+    var font=function(x){ return (x.b?'bold ':'')+Math.round(fs*(x.g?1.3:x.p?0.85:1))+'px "Courier New", monospace'; };
+    var wrap=function(txt,max,f){ g.font=f; var out=[],cur=''; String(txt).split(' ').forEach(function(p){ var t=cur?cur+' '+p:p; if(g.measureText(t).width>max && cur){ out.push(cur); cur=p; } else cur=t; }); out.push(cur); return out; };
+    var plan=[], y=pad;
+    L.forEach(function(x){
+      if (x.hr){ plan.push({hr:1,y:y+fs*0.5}); y+=fs; return; }
+      var f=font(x), lh=Math.round(fs*(x.g?1.3:x.p?0.85:1)*1.35);
+      if (x.l!==undefined){ g.font=f; var rw=g.measureText(x.r).width; var ls=wrap(x.l,W-2*pad-rw-12,f);
+        ls.forEach(function(s,i){ plan.push({f:f,t:s,x:pad,y:y}); if(i===0) plan.push({f:f,t:x.r,x:W-pad,y:y,al:'right'}); y+=lh; }); return; }
+      wrap(x.t,W-2*pad,f).forEach(function(s){ plan.push({f:f,t:s,x:x.c?W/2:pad,y:y,al:x.c?'center':'left'}); y+=lh; });
+    });
+    cv.width=W; cv.height=y+pad; g.fillStyle='#fff'; g.fillRect(0,0,W,cv.height); g.fillStyle='#000'; g.textBaseline='top';
+    plan.forEach(function(p){ if(p.hr){ g.setLineDash([6,4]); g.beginPath(); g.moveTo(pad,p.y); g.lineTo(W-pad,p.y); g.stroke(); return; } g.font=p.f; g.textAlign=p.al||'left'; g.fillText(p.t,p.x,p.y); });
+    try { document.getElementById('c-baixar').href = cv.toDataURL('image/png'); } catch(e){}
+  }
+  document.querySelectorAll('[data-papel]').forEach(function(b){ b.addEventListener('click', function(){ papel(+b.dataset.papel); }); });
+  document.getElementById('c-imprimir').addEventListener('click', function(){ window.print(); });
+  papel(80);
+}
+
+var $ = function(s){ return document.querySelector(s); };
+var brl = function(v){ return 'R$ ' + v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+var esc = function(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
+var porId = {}; MENU.forEach(function(p){ porId[p.id]=p; });
+function partes(nome){ return {n:nome, pc:''}; }
+
+var guard = {};
+try { guard = JSON.parse(localStorage.getItem('kitami-cliente')||'{}'); } catch(e){}
+var st = {itens:[], comp:{}, modo:guard.modo||'Entrega', pag:guard.pag||'Pix'};
+var DADOS = ['nome','tel','rua','num','bairro','ref','troco','obs'];
+
+/* aviso antes das 18h */
+var h = new Date().getHours(); if (h>=4 && h<18) $('#aviso').hidden = false;
+
+/* categorias + lista */
+var cats = ORDEM.filter(function(c){ return MENU.some(function(p){ return p.cat===c; }); });
+MENU.forEach(function(p){ if (cats.indexOf(p.cat)<0) cats.push(p.cat); });
+$('#cats').innerHTML = cats.map(function(c,i){ return '<button type="button" class="cat'+(i?'':' on')+'" data-cat="'+i+'">'+esc(NOME_CAT[c]||c)+'</button>'; }).join('');
+$('#lista').innerHTML = cats.map(function(c,i){
+  return '<section class="sec" id="s'+i+'"><h2>'+esc(NOME_CAT[c]||c)+'</h2><div class="itens">'+
+    MENU.filter(function(p){ return p.cat===c; }).map(function(p){
+      var t = partes(p.nome);
+      return '<button type="button" class="item" data-id="'+p.id+'">'+
+        '<img src="'+p.img+'" alt="" loading="lazy" width="104" height="104">'+
+        '<span class="info"><b>'+esc(t.n)+'</b>'+(t.pc?'<span class="pc">'+esc(t.pc)+'</span>':'')+
+        (p.comp?'<small>'+esc(p.comp)+'</small>':'')+
+        '<span class="base"><span class="preco">'+brl(p.preco)+'</span><span class="mais" data-badge="'+p.id+'">+</span></span></span></button>';
+    }).join('')+'</div></section>';
+}).join('');
+
+document.querySelectorAll('.cat').forEach(function(b){
+  b.addEventListener('click', function(){ document.getElementById('s'+b.dataset.cat).scrollIntoView({behavior:'smooth'}); });
+});
+var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+var marcar = function(){
+  var y = 120, atual = 0;
+  secs.forEach(function(s,i){ if (s.getBoundingClientRect().top < y) atual = i; });
+  document.querySelectorAll('.cat').forEach(function(b,i){
+    var on = i===atual; if (on && !b.classList.contains('on')) b.scrollIntoView({inline:'center',block:'nearest'});
+    b.classList.toggle('on', on);
+  });
+};
+addEventListener('scroll', function(){ requestAnimationFrame(marcar); }, {passive:true});
+
+/* folhas */
+var aberta = null;
+function abrir(f){ fechar(); aberta = f; f.classList.add('on'); $('#veu').classList.add('on'); document.body.style.overflow='hidden'; }
+function fechar(){ if (aberta) aberta.classList.remove('on'); aberta = null; $('#veu').classList.remove('on'); document.body.style.overflow=''; }
+$('#veu').addEventListener('click', fechar);
+document.querySelectorAll('[data-fechar]').forEach(function(b){ b.addEventListener('click', fechar); });
+addEventListener('keydown', function(e){ if (e.key==='Escape') fechar(); });
+
+/* detalhe do item */
+var atual = null, dq = 1;
+document.querySelectorAll('.item').forEach(function(b){ b.addEventListener('click', function(){ abrirItem(b.dataset.id); }); });
+function abrirItem(id){
+  var p = porId[id], t = partes(p.nome); atual = p; dq = 1;
+  var comp = p.comp ? '<ul class="comp">'+p.comp.split(/\s*[;:]\s*/).filter(Boolean).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>' : '';
+  $('#det').innerHTML = '<img class="det-img" src="'+p.img+'" alt="'+esc(p.nome)+'">'+
+    '<h3>'+esc(t.n)+'</h3>'+(t.pc?'<span class="pc">'+esc(t.pc)+'</span>':'')+comp+
+    (/Combo|Combinados/.test(p.cat) ? '<div class="h4">Complementos<small>Toque no + pra adicionar ao pedido.</small></div><div class="bloco" id="d-cp">'+cpHTML()+'</div>' : '')+
+    (p.cat==='Bebidas' ? '' : '<label class="t" for="d-obs">Alguma observação?</label><textarea class="campo" id="d-obs" placeholder="Ex.: sem cebolinha, sem gergelim"></textarea>');
+  attQ(); abrir($('#f-item'));
+}
+function cpHTML(){
+  return COMPLEMENTOS.map(function(c){
+    var q = st.comp[c.id]||0;
+    return '<div class="linha"><div class="tx"><b>'+esc(c.nome)+'</b><small>'+(c.preco?brl(c.preco):'Grátis')+'</small></div>'+
+      '<div class="qtd"><button type="button" data-cp="'+c.id+'" data-d="-1" aria-label="Menos '+esc(c.nome)+'">−</button><b>'+q+'</b><button type="button" data-cp="'+c.id+'" data-d="1" aria-label="Mais '+esc(c.nome)+'">+</button></div></div>';
+  }).join('');
+}
+$('#det').addEventListener('click', function(e){
+  var b = e.target.closest('[data-cp]'); if (!b) return;
+  st.comp[b.dataset.cp] = Math.max(0,(st.comp[b.dataset.cp]||0) + (+b.dataset.d));
+  $('#d-cp').innerHTML = cpHTML(); att();
+});
+function attQ(){ $('#d-q').textContent = dq; $('#d-add').textContent = 'Adicionar · ' + brl(atual.preco*dq); }
+$('#d-menos').addEventListener('click', function(){ if (dq>1){ dq--; attQ(); } });
+$('#d-mais').addEventListener('click', function(){ dq++; attQ(); });
+$('#d-add').addEventListener('click', function(){
+  var obs = ($('#d-obs') && $('#d-obs').value.trim()) || '';
+  var ja = st.itens.find(function(i){ return i.id===atual.id && i.obs===obs; });
+  if (ja) ja.q += dq; else st.itens.push({id:atual.id, q:dq, obs:obs});
+  fechar(); att(true); toast('Adicionado ao pedido');
+});
+
+/* totais */
+function soma(){
+  var it = st.itens.reduce(function(s,i){ return s + porId[i.id].preco*i.q; },0);
+  var cp = COMPLEMENTOS.reduce(function(s,c){ return s + (st.comp[c.id]||0)*c.preco; },0);
+  return {it:it, cp:cp, tot:it+cp, n:st.itens.reduce(function(s,i){ return s+i.q; },0)};
+}
+function att(pulse){
+  var s = soma();
+  $('#b-n').textContent = s.n; $('#b-v').textContent = brl(s.tot);
+  $('#barra').classList.toggle('on', s.n>0);
+  if (pulse){ var b=$('#abrir-sacola'); b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse'); }
+  document.querySelectorAll('[data-badge]').forEach(function(el){
+    var q = st.itens.filter(function(i){ return i.id===el.dataset.badge; }).reduce(function(a,i){ return a+i.q; },0);
+    el.textContent = q ? q+' no pedido' : '+'; el.classList.toggle('tem', q>0);
+  });
+}
+
+/* sacola */
+$('#abrir-sacola').addEventListener('click', function(){ desenharSacola(); abrir($('#f-sacola')); });
+function val(id){ var el = document.getElementById('c-'+id); return el ? el.value.trim() : (guard[id]||''); }
+function desenharSacola(){
+  var s = soma();
+  if (!s.n){ $('#sac').innerHTML = '<div class="vazio">Seu pedido está vazio.<br>Escolha um combo pra começar.</div>'; prepararEnvio(); return; }
+  var h = '<div class="bloco">'+st.itens.map(function(i,k){
+    var p = porId[i.id];
+    return '<div class="linha"><img src="'+p.img+'" alt=""><div class="tx"><b>'+esc(p.nome)+'</b>'+(i.obs?'<small>'+esc(i.obs)+'</small>':'<small>'+brl(p.preco)+' cada</small>')+'</div>'+
+      '<div class="qtd"><button type="button" data-it="'+k+'" data-d="-1" aria-label="Menos">−</button><b>'+i.q+'</b><button type="button" data-it="'+k+'" data-d="1" aria-label="Mais">+</button></div></div>';
+  }).join('')+'</div>';
+  h += '<div class="h4">Complementos<small>Toque pra adicionar. Toque de novo pra tirar.</small></div><div class="bloco">'+cpHTML()+'</div>';
+  h += '<div class="h4">Como você quer receber?</div><div class="chips">'+['Entrega','Retirada'].map(function(m){
+    return '<button type="button" class="chip'+(st.modo===m?' on':'')+'" data-modo="'+m+'">'+m+'<small>'+(m==='Entrega'?'Sem taxa de entrega':'Na Praia de Itaparica')+'</small></button>';
+  }).join('')+'</div>';
+  h += '<label class="t" for="c-nome">Seu nome</label><input class="campo" id="c-nome" autocomplete="name" value="'+esc(val('nome'))+'">';
+  h += '<label class="t" for="c-tel">WhatsApp</label><input class="campo" id="c-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(27) 9 0000-0000" value="'+esc(val('tel'))+'">';
+  if (st.modo==='Entrega'){
+    h += '<label class="t" for="c-rua">Rua</label><input class="campo" id="c-rua" autocomplete="address-line1" value="'+esc(val('rua'))+'">';
+    h += '<div class="duas"><div><label class="t" for="c-num">Número</label><input class="campo" id="c-num" inputmode="numeric" value="'+esc(val('num'))+'"></div><div><label class="t" for="c-bairro">Bairro</label><input class="campo" id="c-bairro" value="'+esc(val('bairro'))+'"></div></div>';
+    h += '<label class="t" for="c-ref">Complemento ou referência</label><input class="campo" id="c-ref" placeholder="Apto, bloco, perto de…" value="'+esc(val('ref'))+'">';
+  }
+  h += '<div class="h4">Pagamento</div><div class="chips">'+PAGAMENTOS.map(function(p){
+    return '<button type="button" class="chip'+(st.pag===p?' on':'')+'" data-pag="'+p+'">'+p+'</button>';
+  }).join('')+'</div>';
+  if (st.pag==='Dinheiro') h += '<label class="t" for="c-troco">Troco pra quanto?</label><input class="campo" id="c-troco" inputmode="decimal" placeholder="Ex.: 100" value="'+esc(val('troco'))+'">';
+  h += '<label class="t" for="c-obs">Observação do pedido</label><textarea class="campo" id="c-obs" placeholder="Opcional">'+esc(val('obs'))+'</textarea>';
+  h += '<div class="total"><div><span>Itens</span><span>'+brl(s.it)+'</span></div>'+(s.cp?'<div><span>Complementos</span><span>'+brl(s.cp)+'</span></div>':'')+
+       (st.modo==='Entrega'?'<div><span>Entrega</span><span>Grátis</span></div>':'')+
+       '<div class="g"><span>Total</span><span>'+brl(s.tot)+'</span></div></div><div class="erro" id="erro"></div>';
+  $('#sac').innerHTML = h;
+  $('#sac').querySelectorAll('input,textarea').forEach(function(el){ el.addEventListener('input', function(){ guardar(); prepararEnvio(); }); });
+  prepararEnvio();
+}
+$('#sac').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if (!b) return;
+  var d = b.dataset; guardar();
+  if (d.it!==undefined){ var i = st.itens[+d.it]; i.q += +d.d; if (i.q<=0) st.itens.splice(+d.it,1); att(); }
+  else if (d.cp){ st.comp[d.cp] = Math.max(0,(st.comp[d.cp]||0) + (+d.d)); att(); }
+  else if (d.modo){ st.modo = d.modo; }
+  else if (d.pag){ st.pag = d.pag; }
+  else return;
+  var y = $('#f-sacola .corpo').scrollTop; desenharSacola(); $('#f-sacola .corpo').scrollTop = y;
+});
+function guardar(){
+  DADOS.forEach(function(k){ var el = document.getElementById('c-'+k); if (el) guard[k] = el.value; });
+  guard.modo = st.modo; guard.pag = st.pag;
+  try { var g = Object.assign({}, guard); delete g.obs; localStorage.setItem('kitami-cliente', JSON.stringify(g)); } catch(e){}
+}
+
+/* mensagem */
+function falta(){
+  if (!soma().n) return 'Escolha pelo menos um item.';
+  if (!val('nome')) return 'Coloque seu nome.';
+  if (val('tel').replace(/\D/g,'').length < 10) return 'Coloque seu WhatsApp com DDD.';
+  if (st.modo==='Entrega' && (!val('rua') || !val('num') || !val('bairro'))) return 'Complete rua, número e bairro.';
+  return '';
+}
+function mensagem(){
+  var s = soma(), L = [];
+  L.push('*Novo pedido · Vila Kitami Sushi*','');
+  L.push('*Cliente:* '+val('nome'),'*WhatsApp:* '+val('tel'),'');
+  L.push('*Itens*');
+  st.itens.forEach(function(i){ var p=porId[i.id]; L.push(i.q+'x '+p.nome+' — '+brl(p.preco*i.q)); if (i.obs) L.push('   _obs: '+i.obs+'_'); });
+  var cps = COMPLEMENTOS.filter(function(c){ return st.comp[c.id]; });
+  if (cps.length){ L.push('','*Complementos*'); cps.forEach(function(c){ L.push(st.comp[c.id]+'x '+c.nome+' — '+(c.preco?brl(c.preco*st.comp[c.id]):'grátis')); }); }
+  L.push('');
+  if (st.modo==='Entrega'){
+    L.push('*Entrega:* '+val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':''));
+  } else L.push('*Retirada na loja*');
+  L.push('*Pagamento:* '+st.pag+(st.pag==='Dinheiro' && val('troco') ? ' · troco pra R$ '+val('troco') : ''));
+  if (val('obs')) L.push('*Obs.:* '+val('obs'));
+  L.push('','*Total:* '+brl(s.tot));
+  L.push('','Comprovante para impressão:', linkCupom());
+  return L.join('\n');
+}
+function linkCupom(){
+  var P = {ts:Date.now(), n:val('nome'), t:val('tel'), m:st.modo, p:st.pag,
+    e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':'') : '',
+    tr: st.pag==='Dinheiro' ? val('troco') : '', o: val('obs'),
+    i: st.itens.map(function(i){ var p=porId[i.id]; return [p.nome,i.q,p.preco,i.obs||'']; }),
+    c: COMPLEMENTOS.filter(function(c){ return st.comp[c.id]; }).map(function(c){ return [c.nome,st.comp[c.id],c.preco]; })};
+  var base = SITE_URL || (location.origin + location.pathname);
+  return base + '?p=' + b64e(P);
+}
+function prepararEnvio(){
+  var f = falta(), a = $('#enviar'); var e = document.getElementById('erro');
+  a.setAttribute('aria-disabled', f ? 'true' : 'false');
+  a.href = f ? '#' : 'https://wa.me/'+WHATS+'?text='+encodeURIComponent(mensagem());
+  if (e) e.textContent = f;
+  $('#copiar').setAttribute('aria-disabled', f ? 'true' : 'false');
+}
+$('#enviar').addEventListener('click', function(e){ if (falta()){ e.preventDefault(); return; } toast('Abrindo o WhatsApp…'); });
+$('#copiar').addEventListener('click', function(){
+  if (falta()) return;
+  var txt = mensagem();
+  var ok = function(){ toast('Pedido copiado. Cole no WhatsApp (27) 9 9765-2700'); };
+  try { navigator.clipboard.writeText(txt).then(ok, fallback); } catch(e){ fallback(); }
+  function fallback(){ var t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); ok(); }catch(e){} t.remove(); }
+});
+var tt; function toast(m){ var t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ t.classList.remove('on'); },2200); }
+att();
+})();
+</script>
+
+</body>
+</html>
