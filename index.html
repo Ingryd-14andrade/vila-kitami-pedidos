@@ -149,10 +149,11 @@ body.cupom-on > :not(#cupom){display:none!important}
 .papel .c{text-align:center}.papel .b{font-weight:700}.papel .g{font-size:1.35em}.papel .p{font-size:.85em}
 .papel .row{display:flex;justify-content:space-between;gap:8px}.papel .row span:last-child{white-space:nowrap}
 .papel hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.colar{max-width:420px;margin:0 auto 16px;display:grid;gap:10px}.colar p{margin:0;color:var(--suave);font-size:14.5px}.colar textarea{min-height:110px}
 .c-dica{max-width:420px;margin:14px auto 0;color:var(--suave);font-size:13.5px;text-align:center}
 @media print{
   #cupom{padding:0;min-height:0;background:#fff}
-  .c-barra,.c-dica{display:none!important}
+  .c-barra,.c-dica,.colar{display:none!important}
   .papel{box-shadow:none;border-radius:0;padding:0 2mm;margin:0}
   .papel.w80{width:76mm}.papel.w58{width:54mm}
 }
@@ -191,7 +192,13 @@ body.cupom-on > :not(#cupom){display:none!important}
     <button type="button" class="chip on" data-papel="80">80 mm</button><button type="button" class="chip" data-papel="58">58 mm</button>
     <button type="button" class="btn" id="c-imprimir">Imprimir</button><a class="btn sec2" id="c-baixar" download="pedido-vila-kitami.png" href="#">Salvar imagem</a>
   </div>
-  <div class="papel w80" id="papel"></div>
+  <div class="colar" id="colar" hidden>
+    <p>No WhatsApp, segure a mensagem do pedido, toque em <b>Copiar</b> e cole aqui.</p>
+    <button type="button" class="btn" id="c-colar">Colar pedido</button>
+    <textarea class="campo" id="c-texto" placeholder="Ou cole aqui o texto do pedido"></textarea>
+    <p class="erro" id="c-erro"></p>
+  </div>
+  <div class="papel w80" id="papel" hidden></div>
   <p class="c-dica">No celular, se a impressora usa um app próprio, toque em "Salvar imagem" e imprima pelo app.</p>
 </section>
 
@@ -213,8 +220,43 @@ var LOJA = {nome:'VILA KITAMI SUSHI', cnpj:'67.762.247/0001-16', tel:'(27) 9 976
 var SITE_URL = 'https://vila-kitami-pedidos.vercel.app/'; /* endereço do site publicado; vazio = usa o endereço atual */
 function b64e(o){ return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64d(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
-var PARAM = null; try { PARAM = new URLSearchParams(location.search).get('p'); } catch(e){}
-if (PARAM){ try { mostrarCupom(b64d(PARAM)); return; } catch(e){} }
+function lerPedido(txt){
+  var limpa=function(s){ return s.replace(/[*_]/g,'').trim(); };
+  var num=function(s){ return parseFloat(String(s).replace(/[^\d,]/g,'').replace(',','.'))||0; };
+  var P={ts:Date.now(),n:'',t:'',m:'Retirada',e:'',p:'',tr:'',o:'',i:[],c:[]}, sec='';
+  txt.split(/\r?\n/).forEach(function(raw){
+    var l=limpa(raw); if(!l) return;
+    var m;
+    if (/^Cliente:/i.test(l)) P.n=l.replace(/^Cliente:\s*/i,'');
+    else if (/^WhatsApp:/i.test(l)) P.t=l.replace(/^WhatsApp:\s*/i,'');
+    else if (/^Itens$/i.test(l)) sec='i';
+    else if (/^Complementos$/i.test(l)) sec='c';
+    else if (/^Entrega:/i.test(l)){ P.m='Entrega'; P.e=l.replace(/^Entrega:\s*/i,''); sec=''; }
+    else if (/^Retirada na loja/i.test(l)){ P.m='Retirada'; sec=''; }
+    else if (/^Pagamento:/i.test(l)){ var pg=l.replace(/^Pagamento:\s*/i,''); m=pg.match(/troco pra R\$\s*([\d.,]+)/i); if(m) P.tr=m[1]; P.p=pg.split('·')[0].trim(); sec=''; }
+    else if (/^\s*_obs:/i.test(raw) && P.i.length){ P.i[P.i.length-1][3]=l.replace(/^obs:\s*/i,''); }
+    else if (/^Obs\.?:/i.test(l)){ P.o=l.replace(/^Obs\.?:\s*/i,''); sec=''; }
+    else if (/^Total:/i.test(l)){ sec=''; }
+    else if ((sec==='i'||sec==='c') && (m=l.match(/^(\d+)x\s+(.+)\s+[—–-]\s+(R\$\s*[\d.,]+|gr[aá]tis)$/i))){
+      var q=+m[1], v=/gr[aá]tis/i.test(m[3])?0:num(m[3]);
+      (sec==='i'?P.i:P.c).push([m[2],q,q?v/q:0,'']);
+    }
+  });
+  return P;
+}
+var MODO_IMPRIMIR = location.hash==='#imprimir';
+if (MODO_IMPRIMIR){ abrirImpressao(); return; }
+function abrirImpressao(){
+  document.title='Imprimir pedido · Vila Kitami';
+  document.body.classList.add('cupom-on'); document.getElementById('cupom').hidden=false; document.getElementById('colar').hidden=false;
+  var ta=document.getElementById('c-texto'), er=document.getElementById('c-erro');
+  var usar=function(txt){ var P=lerPedido(txt||''); if(!P.i.length){ er.textContent='Não achei os itens. Copie a mensagem inteira do pedido.'; document.getElementById('papel').hidden=true; return; } er.textContent=''; mostrarCupom(P); };
+  ta.addEventListener('input',function(){ usar(ta.value); });
+  document.getElementById('c-colar').addEventListener('click',function(){
+    try { navigator.clipboard.readText().then(function(x){ ta.value=x; usar(x); }, function(){ ta.focus(); er.textContent='Toque no campo abaixo e escolha Colar.'; }); } catch(e){ ta.focus(); }
+  });
+}
+var cupomPronto=false;
 function mostrarCupom(P){
   var R = function(v){ return 'R$ '+v.toFixed(2).replace('.',','); };
   var d = new Date(P.ts||Date.now()), pad=function(n){return String(n).padStart(2,'0');};
@@ -238,10 +280,10 @@ function mostrarCupom(P){
     if (x.l!==undefined) return '<div class="row'+cls(x)+'"><span>'+e(x.l)+'</span><span>'+e(x.r)+'</span></div>';
     return '<div class="ln'+cls(x)+'">'+e(x.t)+'</div>';
   }).join('');
-  document.title = 'Pedido de '+P.n+' · Vila Kitami';
+  document.getElementById('papel').hidden = false;
   document.body.classList.add('cupom-on'); document.getElementById('cupom').hidden = false;
-  var w = 80, estilo = document.createElement('style'); document.head.appendChild(estilo);
-  function papel(n){ w=n; document.getElementById('papel').className='papel w'+n; estilo.textContent='@page{size:'+n+'mm auto;margin:0}';
+  var w = window.__papelW||80, estilo = document.getElementById('estilo-papel') || document.head.appendChild(Object.assign(document.createElement('style'),{id:'estilo-papel'}));
+  function papel(n){ w=n; window.__papelW=n; document.getElementById('papel').className='papel w'+n; estilo.textContent='@page{size:'+n+'mm auto;margin:0}';
     document.querySelectorAll('[data-papel]').forEach(function(b){ b.classList.toggle('on', +b.dataset.papel===n); }); imagem(); }
   function imagem(){
     var W = w===80 ? 576 : 384, pad=14, fs = w===80 ? 24 : 19, cv=document.createElement('canvas'), g=cv.getContext('2d');
@@ -259,9 +301,12 @@ function mostrarCupom(P){
     plan.forEach(function(p){ if(p.hr){ g.setLineDash([6,4]); g.beginPath(); g.moveTo(pad,p.y); g.lineTo(W-pad,p.y); g.stroke(); return; } g.font=p.f; g.textAlign=p.al||'left'; g.fillText(p.t,p.x,p.y); });
     try { document.getElementById('c-baixar').href = cv.toDataURL('image/png'); } catch(e){}
   }
-  document.querySelectorAll('[data-papel]').forEach(function(b){ b.addEventListener('click', function(){ papel(+b.dataset.papel); }); });
-  document.getElementById('c-imprimir').addEventListener('click', function(){ window.print(); });
-  papel(80);
+  window.__papel = papel;
+  if (!cupomPronto){ cupomPronto=true;
+    document.querySelectorAll('[data-papel]').forEach(function(b){ b.addEventListener('click', function(){ window.__papel(+b.dataset.papel); }); });
+    document.getElementById('c-imprimir').addEventListener('click', function(){ window.print(); });
+  }
+  papel(w);
 }
 
 var $ = function(s){ return document.querySelector(s); };
@@ -440,7 +485,6 @@ function mensagem(){
   L.push('*Pagamento:* '+st.pag+(st.pag==='Dinheiro' && val('troco') ? ' · troco pra R$ '+val('troco') : ''));
   if (val('obs')) L.push('*Obs.:* '+val('obs'));
   L.push('','*Total:* '+brl(s.tot));
-  if (SITE_URL || !/claude/i.test(location.hostname)) L.push('','Comprovante para impressão:', linkCupom());
   return L.join('\n');
 }
 function linkCupom(){
