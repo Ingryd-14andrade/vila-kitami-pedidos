@@ -149,11 +149,28 @@ body.cupom-on > :not(#cupom){display:none!important}
 .papel .c{text-align:center}.papel .b{font-weight:700}.papel .g{font-size:1.35em}.papel .p{font-size:.85em}
 .papel .row{display:flex;justify-content:space-between;gap:8px}.papel .row span:last-child{white-space:nowrap}
 .papel hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.voltar{border:0;background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;box-shadow:var(--sombra)}
+body.painel-on > :not(#painel):not(#cupom){display:none!important}
+#painel{min-height:100vh;background:var(--bg);padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.p-topo{max-width:560px;margin:0 auto 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.p-topo b{font-family:var(--f-marca);font-weight:400;font-size:22px}
+.p-topo span{color:var(--suave);font-size:13px}
+.p-login{max-width:360px;margin:30px auto;display:grid;gap:10px}.p-login p{margin:0;color:var(--suave)}
+.p-acoes{max-width:560px;margin:0 auto 12px;display:flex;gap:8px}
+.p-lista{max-width:560px;margin:0 auto;display:grid;gap:10px}
+.ped{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sombra);border:2px solid transparent;text-align:left;width:100%}
+.ped.novo{border-color:var(--verm)}
+.ped b{font-size:16px}.ped .h{color:var(--suave);font-size:13px;text-align:right}
+.ped small{grid-column:1/-1;color:var(--suave);font-size:13.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ped .tag{justify-self:start;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--verm-claro);color:var(--verm)}
+.ped .tag.ok{background:transparent;color:var(--ok);border:1px solid var(--ok)}
+.ped .v{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.p-vazio{text-align:center;color:var(--suave);padding:40px 10px}
 .colar{max-width:420px;margin:0 auto 16px;display:grid;gap:10px}.colar p{margin:0;color:var(--suave);font-size:14.5px}.colar textarea{min-height:110px}
 .c-dica{max-width:420px;margin:14px auto 0;color:var(--suave);font-size:13.5px;text-align:center}
 @media print{
   #cupom{padding:0;min-height:0;background:#fff}
-  .c-barra,.c-dica,.colar{display:none!important}
+  .c-barra,.c-dica,.colar,#painel{display:none!important}
   .papel{box-shadow:none;border-radius:0;padding:0 2mm;margin:0}
   .papel.w80{width:76mm}.papel.w58{width:54mm}
 }
@@ -188,7 +205,7 @@ body.cupom-on > :not(#cupom){display:none!important}
 </section>
 <div class="toast" id="toast"></div>
 <section id="cupom" hidden>
-  <div class="c-barra"><b>Comprovante do pedido</b>
+  <div class="c-barra"><button type="button" class="voltar" id="c-voltar" hidden>← Pedidos</button><b>Comprovante do pedido</b>
     <button type="button" class="chip on" data-papel="80">80 mm</button><button type="button" class="chip" data-papel="58">58 mm</button>
     <button type="button" class="btn" id="c-imprimir">Imprimir</button><a class="btn sec2" id="c-baixar" download="pedido-vila-kitami.png" href="#">Salvar imagem</a>
   </div>
@@ -200,6 +217,19 @@ body.cupom-on > :not(#cupom){display:none!important}
   </div>
   <div class="papel w80" id="papel" hidden></div>
   <p class="c-dica">No celular, se a impressora usa um app próprio, toque em "Salvar imagem" e imprima pelo app.</p>
+</section>
+<section id="painel" hidden>
+  <div class="p-topo"><b>Pedidos da loja</b><span id="p-status">—</span></div>
+  <form id="p-login" class="p-login">
+    <p>Painel só da loja. Digite o PIN.</p>
+    <input class="campo" id="p-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN">
+    <button class="btn" type="submit">Entrar</button>
+    <p class="erro" id="p-erro"></p>
+  </form>
+  <div id="p-area" hidden>
+    <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip" id="p-som">Ativar som</button></div>
+    <div id="p-lista" class="p-lista"></div>
+  </div>
 </section>
 
 <script>
@@ -246,6 +276,63 @@ function lerPedido(txt){
 }
 var MODO_IMPRIMIR = location.hash==='#imprimir';
 if (MODO_IMPRIMIR){ abrirImpressao(); return; }
+if (location.hash==='#painel'){ abrirPainel(); return; }
+function lsGet(k,d){ try { var v=localStorage.getItem(k); return v?JSON.parse(v):d; } catch(e){ return d; } }
+function lsSet(k,v){ try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} }
+function abrirPainel(){
+  document.title='Pedidos · Vila Kitami';
+  document.body.classList.add('painel-on'); var pn=document.getElementById('painel'); pn.hidden=false;
+  var pin=lsGet('kitami-pin',''), dados=lsGet('kitami-pedidos',{}), impressos=lsGet('kitami-impressos',{}), desde=lsGet('kitami-desde',0);
+  var som=false, ctx=null, timer=null, st=document.getElementById('p-status');
+  var R=function(v){ return 'R$ '+v.toFixed(2).replace('.',','); };
+  var pad=function(n){ return String(n).padStart(2,'0'); };
+  var esc2=function(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
+  function bip(){ if(!som||!ctx) return; try { [0,0.25].forEach(function(t0){ var o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.25,ctx.currentTime+t0); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t0+0.2); o.start(ctx.currentTime+t0); o.stop(ctx.currentTime+t0+0.22); }); } catch(e){} if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+  function total(P){ var s=0; P.i.forEach(function(x){ s+=x[1]*x[2]; }); (P.c||[]).forEach(function(x){ s+=x[1]*x[2]; }); return s; }
+  function desenhar(){
+    var arr=Object.keys(dados).map(function(k){ return dados[k]; }).sort(function(a,b){ return b.recebido-a.recebido; });
+    var limite=Date.now()-36*3600*1000; arr=arr.filter(function(x){ return x.recebido>limite; });
+    var novos=arr.filter(function(x){ return !impressos[x.id]; }).length;
+    document.title=(novos?'('+novos+') ':'')+'Pedidos · Vila Kitami';
+    document.getElementById('p-lista').innerHTML = arr.length ? arr.map(function(x){
+      var P=x.pedido, d=new Date(x.recebido), ok=impressos[x.id];
+      return '<button type="button" class="ped'+(ok?'':' novo')+'" data-ped="'+esc2(x.id)+'"><b>'+esc2(P.n||'Cliente')+'</b><span class="h">'+pad(d.getHours())+':'+pad(d.getMinutes())+'</span>'+
+        '<span class="tag'+(ok?' ok':'')+'">'+(ok?'Impresso':'Novo')+'</span><span class="v">'+R(total(P))+'</span>'+
+        '<small>'+esc2((P.m==='Entrega'?'Entrega · ':'Retirada · ')+P.i.map(function(i){ return i[1]+'x '+i[0]; }).join(', '))+'</small></button>';
+    }).join('') : '<div class="p-vazio">Nenhum pedido nas últimas 36 horas.<br>Quando um cliente enviar, ele aparece aqui.</div>';
+  }
+  function buscar(){
+    st.textContent='Atualizando…';
+    fetch('/api/pedidos?desde='+(desde||0),{headers:{'x-pin':pin},cache:'no-store'}).then(function(r){
+      if(r.status===401){ sair('PIN incorreto.'); throw 0; } return r.json();
+    }).then(function(j){
+      var chegou=0;
+      (j.pedidos||[]).forEach(function(x){ if(!dados[x.id]) chegou++; dados[x.id]=x; if(x.recebido>desde) desde=x.recebido; });
+      var lim=Date.now()-36*3600*1000; Object.keys(dados).forEach(function(k){ if(dados[k].recebido<lim) delete dados[k]; });
+      lsSet('kitami-pedidos',dados); lsSet('kitami-desde',desde);
+      var d=new Date(); st.textContent='Atualizado às '+pad(d.getHours())+':'+pad(d.getMinutes());
+      if(chegou) bip(); desenhar();
+    }).catch(function(e){ if(e!==0) st.textContent='Sem conexão. Tentando de novo…'; });
+  }
+  function ciclo(){ clearInterval(timer); timer=setInterval(function(){ if(document.visibilityState==='visible' && document.getElementById('cupom').hidden) buscar(); },30000); }
+  function entrar(){ document.getElementById('p-login').hidden=true; document.getElementById('p-area').hidden=false; desenhar(); buscar(); ciclo(); }
+  function sair(msg){ lsSet('kitami-pin',''); pin=''; clearInterval(timer); document.getElementById('p-area').hidden=true; document.getElementById('p-login').hidden=false; document.getElementById('p-erro').textContent=msg||''; }
+  document.getElementById('p-login').addEventListener('submit',function(e){ e.preventDefault(); pin=document.getElementById('p-pin').value.trim(); lsSet('kitami-pin',pin); entrar(); });
+  document.getElementById('p-atualizar').addEventListener('click',buscar);
+  document.getElementById('p-som').addEventListener('click',function(){ try { ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); } catch(e){} som=true; this.textContent='Som ativado'; this.classList.add('on'); bip(); });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && pin) buscar(); });
+  document.getElementById('p-lista').addEventListener('click',function(e){
+    var b=e.target.closest('[data-ped]'); if(!b) return; var x=dados[b.dataset.ped]; if(!x) return;
+    pn.hidden=true; document.body.classList.remove('painel-on');
+    var v=document.getElementById('c-voltar'); v.hidden=false;
+    mostrarCupom(x.pedido); window.scrollTo(0,0);
+    window.__aoImprimir=function(){ impressos[x.id]=Date.now(); lsSet('kitami-impressos',impressos); };
+  });
+  document.getElementById('c-voltar').addEventListener('click',function(){
+    document.getElementById('cupom').hidden=true; document.body.classList.remove('cupom-on'); document.body.classList.add('painel-on'); pn.hidden=false; desenhar();
+  });
+  if(pin) entrar();
+}
 function abrirImpressao(){
   document.title='Imprimir pedido · Vila Kitami';
   document.body.classList.add('cupom-on'); document.getElementById('cupom').hidden=false; document.getElementById('colar').hidden=false;
@@ -304,7 +391,7 @@ function mostrarCupom(P){
   window.__papel = papel;
   if (!cupomPronto){ cupomPronto=true;
     document.querySelectorAll('[data-papel]').forEach(function(b){ b.addEventListener('click', function(){ window.__papel(+b.dataset.papel); }); });
-    document.getElementById('c-imprimir').addEventListener('click', function(){ window.print(); });
+    document.getElementById('c-imprimir').addEventListener('click', function(){ if (window.__aoImprimir) window.__aoImprimir(); window.print(); });
   }
   papel(w);
 }
@@ -496,6 +583,21 @@ function linkCupom(){
   var base = SITE_URL || (location.origin + location.pathname);
   return base + '?p=' + b64e(P);
 }
+var envioId = null, envioHash = '';
+function enviarPainel(){
+  try {
+    var txt = mensagem(), h = 0; for (var k=0;k<txt.length;k++){ h=((h<<5)-h+txt.charCodeAt(k))|0; }
+    h = (h>>>0).toString(36);
+    if (h !== envioHash){ var d=new Date(), p2=function(n){return String(n).padStart(2,'0');}; envioHash=h; envioId=d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'-'+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+'-'+h; }
+    var P = {ts:Date.now(), n:val('nome'), t:val('tel'), m:st.modo, p:st.pag,
+      e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':'') : '',
+      tr: st.pag==='Dinheiro' ? val('troco') : '', o: val('obs'),
+      i: st.itens.map(function(i){ var p=porId[i.id]; return [p.nome,i.q,p.preco,i.obs||'']; }),
+      c: COMPLEMENTOS.filter(function(c){ return st.comp[c.id]; }).map(function(c){ return [c.nome,st.comp[c.id],c.preco]; })};
+    if (/claude/i.test(location.hostname)) return;
+    fetch('/api/pedido', {method:'POST', keepalive:true, headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:envioId, pedido:P})}).catch(function(){});
+  } catch(e){}
+}
 function prepararEnvio(){
   var f = falta(), a = $('#enviar'); var e = document.getElementById('erro');
   a.setAttribute('aria-disabled', f ? 'true' : 'false');
@@ -503,9 +605,10 @@ function prepararEnvio(){
   if (e) e.textContent = f;
   $('#copiar').setAttribute('aria-disabled', f ? 'true' : 'false');
 }
-$('#enviar').addEventListener('click', function(e){ if (falta()){ e.preventDefault(); return; } toast('Abrindo o WhatsApp…'); });
+$('#enviar').addEventListener('click', function(e){ if (falta()){ e.preventDefault(); return; } enviarPainel(); toast('Abrindo o WhatsApp…'); });
 $('#copiar').addEventListener('click', function(){
   if (falta()) return;
+  enviarPainel();
   var txt = mensagem();
   var ok = function(){ toast('Pedido copiado. Cole no WhatsApp (27) 9 9765-2700'); };
   try { navigator.clipboard.writeText(txt).then(ok, fallback); } catch(e){ fallback(); }
