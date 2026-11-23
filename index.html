@@ -156,6 +156,7 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
 .p-topo span{color:var(--suave);font-size:13px}
 .p-login{max-width:360px;margin:30px auto;display:grid;gap:10px}.p-login p{margin:0;color:var(--suave)}
 .p-acoes{max-width:560px;margin:0 auto 12px;display:flex;gap:8px}
+.chip.alerta{background:var(--verm);color:#fff;border-color:var(--verm);font-weight:700}
 .p-lista{max-width:560px;margin:0 auto;display:grid;gap:10px}
 .ped{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sombra);border:2px solid transparent;text-align:left;width:100%}
 .ped.novo{border-color:var(--verm)}
@@ -226,7 +227,7 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
     <p class="erro" id="p-erro"></p>
   </form>
   <div id="p-area" hidden>
-    <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip" id="p-som">Ativar som</button></div>
+    <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip alerta" id="p-som">Toque aqui para ativar o som</button></div>
     <div id="p-lista" class="p-lista"></div>
   </div>
 </section>
@@ -286,7 +287,13 @@ function abrirPainel(){
   var R=function(v){ return 'R$ '+v.toFixed(2).replace('.',','); };
   var pad=function(n){ return String(n).padStart(2,'0'); };
   var esc2=function(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
-  function bip(){ if(!som||!ctx) return; try { [0,0.25].forEach(function(t0){ var o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.25,ctx.currentTime+t0); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t0+0.2); o.start(ctx.currentTime+t0); o.stop(ctx.currentTime+t0+0.22); }); } catch(e){} if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+  var vistos=lsGet('kitami-vistos',{});
+  function bip(){ if(!som||!ctx) return; try { if(ctx.state!=='running') ctx.resume();
+      [[0,880],[0.18,1175],[0.36,1568],[0.75,880],[0.93,1175],[1.11,1568]].forEach(function(n){ var t0=ctx.currentTime+n[0], o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.value=n[1]; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.5,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.17); o.start(t0); o.stop(t0+0.18); });
+    } catch(e){} if(navigator.vibrate) navigator.vibrate([300,120,300,120,300]); }
+  function pendentes(){ return Object.keys(dados).filter(function(k){ return !impressos[k] && !vistos[k] && dados[k].recebido>Date.now()-6*3600*1000; }); }
+  function avisar(x){ try { if(window.Notification && Notification.permission==='granted'){ new Notification('Novo pedido · Vila Kitami',{body:(x.pedido.n||'Cliente')+' · '+R(total(x.pedido)), tag:x.id}); } } catch(e){} }
+  setInterval(function(){ if(som && pendentes().length) bip(); },10000);
   function total(P){ var s=0; P.i.forEach(function(x){ s+=x[1]*x[2]; }); (P.c||[]).forEach(function(x){ s+=x[1]*x[2]; }); return s; }
   function desenhar(){
     var arr=Object.keys(dados).map(function(k){ return dados[k]; }).sort(function(a,b){ return b.recebido-a.recebido; });
@@ -306,22 +313,24 @@ function abrirPainel(){
       if(r.status===401){ sair('PIN incorreto.'); throw 0; } return r.json();
     }).then(function(j){
       var chegou=0;
-      (j.pedidos||[]).forEach(function(x){ if(!dados[x.id]) chegou++; dados[x.id]=x; if(x.recebido>desde) desde=x.recebido; });
+      (j.pedidos||[]).forEach(function(x){ if(!dados[x.id]){ chegou++; avisar(x); } dados[x.id]=x; if(x.recebido>desde) desde=x.recebido; });
       var lim=Date.now()-36*3600*1000; Object.keys(dados).forEach(function(k){ if(dados[k].recebido<lim) delete dados[k]; });
       lsSet('kitami-pedidos',dados); lsSet('kitami-desde',desde);
       var d=new Date(); st.textContent='Atualizado às '+pad(d.getHours())+':'+pad(d.getMinutes());
       if(chegou) bip(); desenhar();
     }).catch(function(e){ if(e!==0) st.textContent='Sem conexão. Tentando de novo…'; });
   }
-  function ciclo(){ clearInterval(timer); timer=setInterval(function(){ if(document.visibilityState==='visible' && document.getElementById('cupom').hidden) buscar(); },30000); }
+  function ciclo(){ clearInterval(timer); timer=setInterval(function(){ buscar(); },20000); }
   function entrar(){ document.getElementById('p-login').hidden=true; document.getElementById('p-area').hidden=false; desenhar(); buscar(); ciclo(); }
   function sair(msg){ lsSet('kitami-pin',''); pin=''; clearInterval(timer); document.getElementById('p-area').hidden=true; document.getElementById('p-login').hidden=false; document.getElementById('p-erro').textContent=msg||''; }
   document.getElementById('p-login').addEventListener('submit',function(e){ e.preventDefault(); pin=document.getElementById('p-pin').value.trim(); lsSet('kitami-pin',pin); entrar(); });
   document.getElementById('p-atualizar').addEventListener('click',buscar);
-  document.getElementById('p-som').addEventListener('click',function(){ try { ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); } catch(e){} som=true; this.textContent='Som ativado'; this.classList.add('on'); bip(); });
+  document.getElementById('p-som').addEventListener('click',function(){ try { ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); } catch(e){} som=true; this.textContent='Som ativado ✓'; this.classList.remove('alerta'); this.classList.add('on'); bip();
+    try { if(window.Notification && Notification.permission==='default') Notification.requestPermission(); } catch(e){} });
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && pin) buscar(); });
   document.getElementById('p-lista').addEventListener('click',function(e){
     var b=e.target.closest('[data-ped]'); if(!b) return; var x=dados[b.dataset.ped]; if(!x) return;
+    vistos[x.id]=Date.now(); lsSet('kitami-vistos',vistos);
     pn.hidden=true; document.body.classList.remove('painel-on');
     var v=document.getElementById('c-voltar'); v.hidden=false;
     mostrarCupom(x.pedido); window.scrollTo(0,0);
