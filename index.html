@@ -158,6 +158,8 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
 .p-acoes{max-width:560px;margin:0 auto 12px;display:flex;gap:8px}
 .chip.alerta{background:var(--verm);color:#fff;border-color:var(--verm);font-weight:700}
 .p-sons{max-width:560px;margin:0 auto 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}.p-sons>span{color:var(--suave);font-size:13.5px}.p-sons>div{display:flex;flex-wrap:wrap;gap:8px}.p-sons .chip{padding:7px 12px;font-size:13.5px}
+.p-inicio{position:fixed;inset:0;z-index:90;border:0;background:var(--verm);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:inherit;cursor:pointer;padding:24px}
+.p-inicio span{font-size:64px}.p-inicio b{font-size:clamp(24px,5vw,36px)}.p-inicio small{font-size:16px;opacity:.85}
 .p-lista{max-width:560px;margin:0 auto;display:grid;gap:10px}
 .ped{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sombra);border:2px solid transparent;text-align:left;width:100%}
 .ped.novo{border-color:var(--verm)}
@@ -220,6 +222,7 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
   <p class="c-dica">No celular, se a impressora usa um app próprio, toque em "Salvar imagem" e imprima pelo app.</p>
 </section>
 <section id="painel" hidden>
+  <button type="button" class="p-inicio" id="p-inicio" hidden><span>🔔</span><b>Toque para abrir o painel</b><small>O som de pedido novo liga junto</small></button>
   <div class="p-topo"><b>Pedidos da loja</b><span id="p-status">—</span></div>
   <form id="p-login" class="p-login">
     <p>Painel só da loja. Digite o PIN.</p>
@@ -228,7 +231,7 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
     <p class="erro" id="p-erro"></p>
   </form>
   <div id="p-area" hidden>
-    <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip alerta" id="p-som">Toque aqui para ativar o som</button></div>
+    <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip alerta" id="p-som">Som desligado · toque para ligar</button></div>
     <div id="p-lista" class="p-lista"></div>
   </div>
 </section>
@@ -332,7 +335,7 @@ function abrirPainel(){
   function ciclo(){ clearInterval(timer); timer=setInterval(function(){ buscar(); },20000); }
   function entrar(){ document.getElementById('p-login').hidden=true; document.getElementById('p-area').hidden=false; desenhar(); buscar(); ciclo(); }
   function sair(msg){ lsSet('kitami-pin',''); pin=''; clearInterval(timer); document.getElementById('p-area').hidden=true; document.getElementById('p-login').hidden=false; document.getElementById('p-erro').textContent=msg||''; }
-  document.getElementById('p-login').addEventListener('submit',function(e){ e.preventDefault(); pin=document.getElementById('p-pin').value.trim(); lsSet('kitami-pin',pin); entrar(); });
+  document.getElementById('p-login').addEventListener('submit',function(e){ e.preventDefault(); ligarSom(); pin=document.getElementById('p-pin').value.trim(); lsSet('kitami-pin',pin); entrar(); });
   document.getElementById('p-atualizar').addEventListener('click',buscar);
   document.getElementById('p-som').addEventListener('click',function(){ ligarSom(); bip();
     try { if(window.Notification && Notification.permission==='default') Notification.requestPermission(); } catch(e){} });
@@ -348,7 +351,11 @@ function abrirPainel(){
   document.getElementById('c-voltar').addEventListener('click',function(){
     document.getElementById('cupom').hidden=true; document.body.classList.remove('cupom-on'); document.body.classList.add('painel-on'); pn.hidden=false; desenhar();
   });
-  if(pin) entrar();
+  var inicio=document.getElementById('p-inicio');
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev,function(){ if(!som) ligarSom(); },{capture:true}); });
+  inicio.addEventListener('click',function(){ ligarSom(); inicio.hidden=true; bip(); });
+  setInterval(function(){ var b=document.getElementById('p-som'); if(som && ctx && ctx.state!=='running'){ try{ ctx.resume(); }catch(e){} } if(!som){ b.textContent='Som desligado · toque para ligar'; b.classList.add('alerta'); b.classList.remove('on'); } },3000);
+  if(pin){ inicio.hidden=false; entrar(); }
 }
 function abrirImpressao(){
   document.title='Imprimir pedido · Vila Kitami';
