@@ -229,7 +229,6 @@ body.painel-on > :not(#painel):not(#cupom){display:none!important}
   </form>
   <div id="p-area" hidden>
     <div class="p-acoes"><button type="button" class="chip" id="p-atualizar">Atualizar</button><button type="button" class="chip alerta" id="p-som">Toque aqui para ativar o som</button></div>
-    <div class="p-sons"><span>Som do aviso:</span><div id="p-sons"></div></div>
     <div id="p-lista" class="p-lista"></div>
   </div>
 </section>
@@ -290,21 +289,20 @@ function abrirPainel(){
   var pad=function(n){ return String(n).padStart(2,'0'); };
   var esc2=function(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
   var vistos=lsGet('kitami-vistos',{});
-  var SONS=[['bell_ring','Toque contínuo (sino)'],['door_bell','Campainha'],['glass','Taça'],['water_droplet_2','Gotinha']];
-  var somEsc=lsGet('kitami-som','bell_ring'), buffers={}, saida=null;
-  function carregar(id){ if(buffers[id]||!ctx) return Promise.resolve(buffers[id]); return fetch('sons/'+id+'.mp3').then(function(r){ return r.arrayBuffer(); }).then(function(a){ return new Promise(function(ok,no){ ctx.decodeAudioData(a,ok,no); }); }).then(function(b){ buffers[id]=b; return b; }).catch(function(){ return null; }); }
-  function tocar(id){ if(!ctx) return; try { if(ctx.state!=='running') ctx.resume(); } catch(e){}
-    carregar(id).then(function(b){ if(!b) return; var vezes=b.duration<1.2?2:1;
-      if(!saida){ var comp=ctx.createDynamicsCompressor(); comp.threshold.value=-24; comp.knee.value=6; comp.ratio.value=12; comp.attack.value=0.002; comp.release.value=0.15; saida=ctx.createGain(); saida.gain.value=4; comp.connect(saida); saida.connect(ctx.destination); saida.__in=comp; }
-      for(var k=0;k<vezes;k++){ var s=ctx.createBufferSource(); s.buffer=b; s.connect(saida.__in); s.start(ctx.currentTime+0.02+k*(b.duration+0.2)); } }); }
-  function bip(){ if(!som||!ctx) return; tocar(somEsc); if(navigator.vibrate) navigator.vibrate([300,120,300]); }
-  function desenharSons(){ document.getElementById('p-sons').innerHTML=SONS.map(function(s){ return '<button type="button" class="chip'+(s[0]===somEsc?' on':'')+'" data-som="'+s[0]+'">'+s[1]+'</button>'; }).join(''); }
-  function ligarSom(){ try { ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); } catch(e){} som=true; var b=document.getElementById('p-som'); b.textContent='Som ativado ✓'; b.classList.remove('alerta'); b.classList.add('on'); SONS.forEach(function(s){ carregar(s[0]); }); }
-  desenharSons();
-  document.getElementById('p-sons').addEventListener('click',function(e){ var b=e.target.closest('[data-som]'); if(!b) return; somEsc=b.dataset.som; lsSet('kitami-som',somEsc); desenharSons(); ligarSom(); tocar(somEsc); });
+  var saida=null;
+  function prepararSaida(){ if(saida||!ctx) return; var c=ctx.createDynamicsCompressor(); c.threshold.value=-24; c.knee.value=6; c.ratio.value=12; c.attack.value=0.002; c.release.value=0.15; saida=ctx.createGain(); saida.gain.value=4; c.connect(saida); saida.connect(ctx.destination); saida.i=c; }
+  function sinoFM(t0,f,dur,vol,razao,indice){ var c=ctx.createOscillator(), m=ctx.createOscillator(), mg=ctx.createGain(), g=ctx.createGain();
+    c.frequency.value=f; m.frequency.value=f*razao; mg.gain.setValueAtTime(f*indice,t0); mg.gain.exponentialRampToValueAtTime(f*0.05,t0+dur);
+    m.connect(mg); mg.connect(c.frequency); c.connect(g); g.connect(saida.i);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    c.start(t0); m.start(t0); c.stop(t0+dur+0.05); m.stop(t0+dur+0.05); }
+  /* Som "Timer de cozinha": sininho mecânico tocando rápido */
+  function timerCozinha(){ prepararSaida(); var t0=ctx.currentTime+0.03; for(var k=0;k<14;k++){ sinoFM(t0+k*0.075,2637,0.25,0.35,1.41,2); } }
+  function bip(){ if(!som||!ctx) return; try { if(ctx.state!=='running') ctx.resume(); timerCozinha(); } catch(e){} if(navigator.vibrate) navigator.vibrate([300,120,300]); }
+  function ligarSom(){ try { ctx=ctx||new (window.AudioContext||window.webkitAudioContext)(); ctx.resume(); } catch(e){} som=true; var b=document.getElementById('p-som'); b.textContent='Som ativado ✓'; b.classList.remove('alerta'); b.classList.add('on'); }
   function pendentes(){ return Object.keys(dados).filter(function(k){ return !impressos[k] && !vistos[k] && dados[k].recebido>Date.now()-6*3600*1000; }); }
   function avisar(x){ try { if(window.Notification && Notification.permission==='granted'){ new Notification('Novo pedido · Vila Kitami',{body:(x.pedido.n||'Cliente')+' · '+R(total(x.pedido)), tag:x.id}); } } catch(e){} }
-  setInterval(function(){ if(som && pendentes().length) bip(); },2600);
+  setInterval(function(){ if(som && pendentes().length) bip(); },1900);
   function total(P){ var s=0; P.i.forEach(function(x){ s+=x[1]*x[2]; }); (P.c||[]).forEach(function(x){ s+=x[1]*x[2]; }); return s; }
   function desenhar(){
     var arr=Object.keys(dados).map(function(k){ return dados[k]; }).sort(function(a,b){ return b.recebido-a.recebido; });
