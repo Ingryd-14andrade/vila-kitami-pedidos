@@ -127,6 +127,7 @@ textarea.campo{resize:vertical;min-height:70px}
 .total{margin-top:18px;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--sombra);display:grid;gap:6px;font-variant-numeric:tabular-nums}
 .total div{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--suave)}
 .total div.g{color:var(--ink);font-weight:700;font-size:19px;padding-top:6px;border-top:1px solid var(--linha);margin-top:4px}
+.cep-msg{font-size:13px;color:var(--suave);margin-top:6px}.cep-msg.ok{color:var(--ok);font-weight:700}.cep-msg.erro{color:var(--verm)}
 .erro{color:var(--verm);font-size:14px;margin-top:10px;min-height:1em}
 .vazio{text-align:center;color:var(--suave);padding:40px 10px}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:80;transform:translate(-50%,20px);background:var(--ok);color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
@@ -429,7 +430,7 @@ function partes(nome){ return {n:nome, pc:''}; }
 var guard = {};
 try { guard = JSON.parse(localStorage.getItem('kitami-cliente')||'{}'); } catch(e){}
 var st = {itens:[], comp:{}, modo:guard.modo||'Entrega', pag:guard.pag||'Pix'};
-var DADOS = ['nome','tel','rua','num','bairro','ref','troco','obs'];
+var DADOS = ['nome','tel','cep','rua','num','bairro','ref','troco','obs'];
 
 /* aviso fora do horário (18h30 às 23h) */
 var agora = new Date(), mins = agora.getHours()*60 + agora.getMinutes(); if (mins < 18*60+30 || mins >= 23*60) $('#aviso').hidden = false;
@@ -541,6 +542,7 @@ function desenharSacola(){
   h += '<label class="t" for="c-nome">Seu nome</label><input class="campo" id="c-nome" autocomplete="name" value="'+esc(val('nome'))+'">';
   h += '<label class="t" for="c-tel">WhatsApp</label><input class="campo" id="c-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(27) 9 0000-0000" value="'+esc(val('tel'))+'">';
   if (st.modo==='Entrega'){
+    h += '<label class="t" for="c-cep">CEP</label><input class="campo" id="c-cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" value="'+esc(val('cep'))+'"><div class="cep-msg" id="cep-msg">Digite o CEP que a gente preenche a rua e o bairro.</div>';
     h += '<label class="t" for="c-rua">Rua</label><input class="campo" id="c-rua" autocomplete="address-line1" value="'+esc(val('rua'))+'">';
     h += '<div class="duas"><div><label class="t" for="c-num">Número</label><input class="campo" id="c-num" inputmode="numeric" value="'+esc(val('num'))+'"></div><div><label class="t" for="c-bairro">Bairro</label><input class="campo" id="c-bairro" value="'+esc(val('bairro'))+'"></div></div>';
     h += '<label class="t" for="c-ref">Complemento ou referência</label><input class="campo" id="c-ref" placeholder="Apto, bloco, perto de…" value="'+esc(val('ref'))+'">';
@@ -555,6 +557,21 @@ function desenharSacola(){
        '<div class="g"><span>Total</span><span>'+brl(s.tot)+'</span></div></div><div class="erro" id="erro"></div>';
   $('#sac').innerHTML = h;
   $('#sac').querySelectorAll('input,textarea').forEach(function(el){ el.addEventListener('input', function(){ guardar(); prepararEnvio(); }); });
+  var cep=document.getElementById('c-cep');
+  if (cep) cep.addEventListener('input', function(){
+    var d=cep.value.replace(/\D/g,'').slice(0,8); cep.value = d.length>5 ? d.slice(0,5)+'-'+d.slice(5) : d;
+    var msg=document.getElementById('cep-msg');
+    if (d.length<8){ msg.textContent='Digite o CEP que a gente preenche a rua e o bairro.'; msg.className='cep-msg'; return; }
+    msg.textContent='Buscando endereço…'; msg.className='cep-msg';
+    fetch('https://viacep.com.br/ws/'+d+'/json/').then(function(r){ return r.json(); }).then(function(j){
+      if (cep.value.replace(/\D/g,'')!==d) return;
+      if (!j || j.erro){ msg.textContent='Não achei esse CEP. Preencha o endereço abaixo.'; msg.className='cep-msg erro'; return; }
+      if (j.logradouro) $('#c-rua').value=j.logradouro;
+      if (j.bairro) $('#c-bairro').value=j.bairro;
+      msg.textContent='✓ '+[j.logradouro,j.bairro,j.localidade+'-'+j.uf].filter(Boolean).join(' · '); msg.className='cep-msg ok';
+      guardar(); prepararEnvio(); $('#c-num').focus();
+    }).catch(function(){ msg.textContent='Não consegui buscar agora. Preencha o endereço abaixo.'; msg.className='cep-msg erro'; });
+  });
   prepararEnvio();
 }
 $('#sac').addEventListener('click', function(e){
@@ -591,7 +608,7 @@ function mensagem(){
   if (cps.length){ L.push('','*Complementos*'); cps.forEach(function(c){ L.push(st.comp[c.id]+'x '+c.nome+' — '+(c.preco?brl(c.preco*st.comp[c.id]):'grátis')); }); }
   L.push('');
   if (st.modo==='Entrega'){
-    L.push('*Entrega:* '+val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':''));
+    L.push('*Entrega:* '+val('rua')+', '+val('num')+' · '+val('bairro')+(val('cep')?' · CEP '+val('cep'):'')+(val('ref')?' ('+val('ref')+')':''));
   } else L.push('*Retirada na loja*');
   L.push('*Pagamento:* '+st.pag+(st.pag==='Dinheiro' && val('troco') ? ' · troco pra R$ '+val('troco') : ''));
   if (val('obs')) L.push('*Obs.:* '+val('obs'));
@@ -600,7 +617,7 @@ function mensagem(){
 }
 function linkCupom(){
   var P = {ts:Date.now(), n:val('nome'), t:val('tel'), m:st.modo, p:st.pag,
-    e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':'') : '',
+    e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('cep')?' · CEP '+val('cep'):'')+(val('ref')?' ('+val('ref')+')':'') : '',
     tr: st.pag==='Dinheiro' ? val('troco') : '', o: val('obs'),
     i: st.itens.map(function(i){ var p=porId[i.id]; return [p.nome,i.q,p.preco,i.obs||'']; }),
     c: COMPLEMENTOS.filter(function(c){ return st.comp[c.id]; }).map(function(c){ return [c.nome,st.comp[c.id],c.preco]; })};
@@ -614,7 +631,7 @@ function enviarPainel(){
     h = (h>>>0).toString(36);
     if (h !== envioHash){ var d=new Date(), p2=function(n){return String(n).padStart(2,'0');}; envioHash=h; envioId=d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'-'+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+'-'+h; }
     var P = {ts:Date.now(), n:val('nome'), t:val('tel'), m:st.modo, p:st.pag,
-      e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('ref')?' ('+val('ref')+')':'') : '',
+      e: st.modo==='Entrega' ? val('rua')+', '+val('num')+' · '+val('bairro')+(val('cep')?' · CEP '+val('cep'):'')+(val('ref')?' ('+val('ref')+')':'') : '',
       tr: st.pag==='Dinheiro' ? val('troco') : '', o: val('obs'),
       i: st.itens.map(function(i){ var p=porId[i.id]; return [p.nome,i.q,p.preco,i.obs||'']; }),
       c: COMPLEMENTOS.filter(function(c){ return st.comp[c.id]; }).map(function(c){ return [c.nome,st.comp[c.id],c.preco]; })};
