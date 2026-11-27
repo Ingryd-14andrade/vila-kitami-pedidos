@@ -1,0 +1,135 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Kit Vila Kitami</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;500;700&display=swap">
+<style>
+/* Layout: uma coluna editorial; cada seção é uma prateleira de arquivos com botão de baixar. Visual da própria marca (escuro). */
+:root{
+ --bg:#121110; --panel:#1C1A18; --line:#2C2925; --fg:#F6F1E8; --muted:#B9B1A6;
+ --hanko:#C8202E; --salmao:#F2825C; --areia:#E8DCC4;
+ --display:"Bricolage Grotesque",system-ui,sans-serif; --body:Figtree,system-ui,sans-serif;
+ color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:64px}
+header{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+header img{width:96px}
+.eyebrow{font-weight:700;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,7vw,76px);line-height:.92;letter-spacing:-.03em;margin:6px 0 10px;text-wrap:balance}
+h1 span{color:var(--salmao)}
+.lead{color:var(--muted);max-width:60ch;margin:0}
+.all{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:0;line-height:1}
+.sec{display:flex;flex-direction:column;gap:20px}
+.sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px;border-bottom:1px solid var(--line);padding-bottom:14px}
+.sechead p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.g4{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.g6{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.item{background:var(--panel);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.media{background:#0B0A0A;display:flex;align-items:center;justify-content:center}
+.media video{width:100%;aspect-ratio:9/16;display:block;background:#000}
+.media img{max-width:100%;display:block}
+.media.pad{padding:18px;aspect-ratio:1/1}
+.media.pad img{max-height:100%;object-fit:contain}
+.media.light{background:var(--areia)}
+.media.port img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.media.tall img{width:100%;aspect-ratio:9/16;object-fit:cover}
+.info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.info b{font-family:var(--display);font-weight:800;font-size:19px;line-height:1.1}
+.info small{color:var(--muted);font-size:13.5px}
+.meta{font-size:12px;letter-spacing:.08em;color:var(--muted);font-variant-numeric:tabular-nums}
+.tag{display:inline-block;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.14em;padding:4px 10px;border-radius:999px;border:1px solid var(--salmao);color:var(--salmao)}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;background:var(--fg);color:var(--bg);margin-top:auto;align-self:flex-start;transition:transform .15s}
+button:hover{transform:translateY(-1px)}
+button:focus-visible{outline:3px solid var(--salmao);outline-offset:2px}
+
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto}
+.acts button{margin-top:0}
+.open{color:var(--muted);font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.open:focus-visible{outline:3px solid var(--salmao);outline-offset:2px;border-radius:4px}
+.err{font-size:12.5px;color:var(--salmao);min-height:0}
+.err:empty{display:none}
+.dl{display:inline-block;text-decoration:none;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;background:var(--fg);color:var(--bg)}
+.dl.big{background:var(--hanko);color:var(--fg);padding:14px 26px;font-size:16px}
+button.big{background:var(--hanko);color:var(--fg);padding:14px 26px;font-size:16px}
+button[disabled]{opacity:.6;cursor:default}
+.note{font-size:13.5px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px;letter-spacing:.2em;text-transform:uppercase;text-align:center}
+@media (max-width:520px){header{grid-template-columns:1fr}header img{width:72px}}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+
+<div class="wrap">
+ <header>
+  <img src="VilaKitami-icone.png" alt="Símbolo da Vila Kitami">
+  <div>
+   <div class="eyebrow">Vila Kitami Sushi · Itaparica, Vila Velha</div>
+   <h1>Kit da marca <span>Vila Kitami.</span></h1>
+   <p class="lead">Todos os vídeos e imagens do projeto em alta qualidade. Os vídeos estão em 1080×1920, prontos para Reels e Stories. Toque em <b>Baixar</b> em cada arquivo. No iPhone, se o arquivo abrir, toque em compartilhar e em Salvar.</p>
+   
+  </div>
+ </header>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Vídeos</h2><p>Verticais, 30 fps, sem música. Dá para colocar a trilha direto no Instagram.</p></div><span class="meta">6 VÍDEOS · MP4</span></div>
+  <div class="grid g3" id="videos"></div>
+ </section>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Logos</h2><p>PNG com fundo transparente, em alta resolução, para impressão e redes.</p></div><span class="meta">4 ARQUIVOS · PNG</span></div>
+  <div class="grid g4" id="logos"></div>
+ </section>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Mascote Sake</h2><p>Em japonês, <i>sake</i> é salmão. Poses originais sem fundo e as figurinhas para WhatsApp e Stories.</p></div><span class="meta">13 ARQUIVOS · PNG</span></div>
+  <div class="grid g6" id="sake"></div>
+ </section>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Carrossel Dicionário Kitami</h2><p>Post para o Instagram, 7 telas em 1080×1350, com as fotos novas das peças.</p></div><span class="meta">7 IMAGENS · JPG</span></div>
+  <div class="grid g4" id="car"></div>
+ </section>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Propostas de aplicação</h2><p>Simulações feitas com IA para mostrar como a marca pode ficar. Não são fotos de materiais que já existem.</p></div><span class="meta">4 IMAGENS · JPG</span></div>
+  <div class="grid g4" id="mock"></div>
+ </section>
+
+ <section class="sec">
+  <div class="sechead"><div><h2>Panfleto de delivery</h2><p>Frente e verso com o Sake, para ir dentro da sacola. PDF para a gráfica e PNG em alta.</p></div><span class="meta">3 ARQUIVOS · PDF E PNG</span></div>
+  <div class="grid g3" id="pdf"></div>
+ </section>
+
+ <footer>Branding · Andrade Studio</footer>
+</div>
+
+<script>
+const V=[
+ ['Vila-Kitami-Livro-da-Marca.mp4','Livro da marca','Logo, símbolo, selo e cores apresentados em movimento.','30 s'],
+ ['Vila-Kitami-Marca-em-Acao.mp4','Marca em ação','A marca aplicada na sacola, na embalagem, no hashi e no uniforme.','24 s'],
+ ['Vila-Kitami-Sake.mp4','Esse é o Sake','Apresentação do mascote, com a ficha dele e onde pode aparecer.','24 s'],
+ ['Vila-Kitami-Sake-nao-e-Saque.mp4','Sake não é saquê','Campanha Dicionário Kitami e pedido pelo Zap.','27 s'],
+ ['Vila-Kitami-Acordou.mp4','A cozinha acordou','Propaganda da loja: horário, cardápio, combo de 90 peças e Zap.','26 s'],
+ ['Vila-Kitami-Sake-Motion-Python.mp4','Sake · versão motion','Versão motion da apresentação do Sake.','24 s'],
+];
+const L=[['VilaKitami-principal.png','Logo principal','Para fundo escuro',''],['VilaKitami-principal-fundo-claro.png','Logo principal','Para fundo claro','light'],['VilaKitami-icone.png','Símbolo','Avatar, selo de embalagem',''],['VilaKitami-selo.png','Selo VK','Carimbo e adesivo','light']];
+const S=[['Sake-pose-hashi.png','Pose hashis'],['Sake-pose-sacola.png','Pose sacola'],
+ ...['01-sake-hashi:Figurinha hashis','02-sake-sacola:Figurinha sacola','03-rosto-piscando:Rosto piscando','04-rosto-confiante:Rosto confiante','05-saiu-pra-entrega:Saiu pra entrega!','06-preparando:Preparando seu pedido','07-obrigado:Obrigado!','08-bora-de-sushi:Bora de sushi?','09-chegou:Chegou?','10-boa-noite:Boa noite!','11-eu-sou-o-sake:Eu sou o Sake!'].map(x=>{const[a,b]=x.split(':');return['figurinhas/sake-'+a+'.png',b]})];
+const C=[1,2,3,4,5,6,7].map(i=>['Dicionario-Kitami-'+i+'.jpg',['Capa','Sake','Niguiri','Gunkan','Maki','Hot','Agora pede'][i-1]]);
+const M=[['mockups/Proposta-sacola.jpg','Sacola'],['mockups/Proposta-caixa.jpg','Embalagem'],['mockups/Proposta-hashi.jpg','Hashi e shoyu'],['mockups/Proposta-sushiman.jpg','Uniforme']];
+const ALL=[...V.map(v=>v[0]),...L.map(v=>v[0]),...S.map(v=>v[0]),...C.map(v=>v[0]),...M.map(v=>v[0]),'Panfleto-Vila-Kitami-Sake.pdf','Panfleto-Sake-frente.png','Panfleto-Sake-verso.png'];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const btn=f=>`<div class="acts"><a class="dl" href="${esc(f)}" download="${esc(f.split('/').pop())}">Baixar</a><a class="open" href="${esc(f)}" target="_blank" rel="noopener">Abrir</a></div>`;
+document.getElementById('videos').innerHTML=V.map(v=>`<div class="item"><div class="media"><video src="${v[0]}" poster="poster-${v[0].replace('Vila-Kitami-','').replace('.mp4','')}.jpg" controls playsinline preload="none"></video></div><div class="info"><b>${v[1]}</b><small>${v[2]}</small><span class="meta">1080×1920 · ${v[3]}</span>${btn(v[0])}</div></div>`).join('');
+document.getElementById('logos').innerHTML=L.map(v=>`<div class="item"><div class="media pad ${v[3]}"><img src="${v[0]}" alt="${esc(v[1])}" loading="lazy"></div><div class="info"><b>${v[1]}</b><small>${v[2]}</small>${btn(v[0])}</div></div>`).join('');
+document.getElementById('sake').innerHTML=S.map((v,i)=>`<div class="item"><div class="media pad light"><img src="${v[0]}" alt="${esc(v[1])}" loading="lazy"></div><div class="info"><b style="font-size:15px">${v[1]}</b>${i<2?'<span class="tag">ORIGINAL</span>':''}${btn(v[0])}</div></div>`).join('');
+document.getElementById('car').innerHTML=C.map((v,i)=>`<div class="item"><div class="media port"><img src="${v[0]}" alt="${esc(v[1])}" loading="lazy"></div><div class="info"><b>${i+1}. ${v[1]}</b>${btn(v[0])}</div></div>`).join('');
+document.getElementById('mock').innerHTML=M.map(v=>`<div class="item"><div class="media tall"><img src="${v[0]}" alt="${esc(v[1])}" loading="lazy"></div><div class="info"><span class="tag">PROPOSTA</span><b>${v[1]}</b>${btn(v[0])}</div></div>`).join('');
+document.getElementById('pdf').innerHTML=[['Panfleto-Sake-frente.png','Frente','Avaliação no iFood, com o Sake.'],['Panfleto-Sake-verso.png','Verso','No Zap sai mais barato, com QR code.']].map(v=>`<div class="item"><div class="media"><img src="${v[0]}" alt="${esc(v[1])}" loading="lazy" style="width:100%;aspect-ratio:397/559;object-fit:cover"></div><div class="info"><b>${v[1]}</b><small>${v[2]}</small><span class="meta">PNG · 1588×2236</span>${btn(v[0])}</div></div>`).join('')+`<div class="item"><div class="info"><b>Panfleto completo</b><small>Frente e verso no mesmo arquivo, pronto para a gráfica.</small><span class="meta">PDF · 2 PÁGINAS</span>${btn('Panfleto-Vila-Kitami-Sake.pdf')}</div></div>`;
+
+</script>
+
+</body></html>
